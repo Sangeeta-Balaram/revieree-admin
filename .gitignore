@@ -8,4 +8,3 @@
 *.png
 
 # Keep node_modules out of regular git (handled by LFS)
-# node_modules/*
