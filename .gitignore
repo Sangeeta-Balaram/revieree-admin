@@ -1,2 +1,11 @@
 .vercel
 .env*.local
+
+# Git LFS - these are now tracked by LFS
+*.log
+*.jpg
+*.jpeg
+*.png
+
+# Keep node_modules out of regular git (handled by LFS)
+# node_modules/*
