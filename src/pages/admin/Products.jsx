@@ -58,6 +58,11 @@ const Products = () => {
 
   const loadProducts = () => {
     try {
+      console.log('Testing localStorage access...');
+      localStorage.setItem('test', 'working');
+      console.log('localStorage test:', localStorage.getItem('test'));
+      localStorage.removeItem('test');
+      
       const allProducts = getProducts();
       console.log('Loaded products:', allProducts);
       setProducts(allProducts);

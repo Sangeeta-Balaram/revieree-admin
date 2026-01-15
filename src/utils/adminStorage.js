@@ -16,8 +16,13 @@ const STORAGE_KEYS = {
   // ======================
   
   export const getProducts = () => {
-    const stored = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
-    return stored ? JSON.parse(stored) : [];
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.error('Error getting products from localStorage:', error);
+      return [];
+    }
   };
   
   export const saveProducts = (products) => {
