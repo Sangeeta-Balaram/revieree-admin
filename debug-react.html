@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Test</title>
+</head>
+<body>
+    <h1>Testing React Mount</h1>
+    <div id="test-root"></div>
+    <script>
+        // Check if React is available
+        if (typeof React === 'undefined') {
+            document.getElementById('test-root').innerHTML = 'React is not loaded';
+        } else {
+            document.getElementById('test-root').innerHTML = 'React is loaded';
+            
+            // Try to render a simple React component
+            const { createElement } = React;
+            const root = ReactDOM.createRoot(document.getElementById('test-root'));
+            
+            const TestComponent = () => {
+                return createElement('div', null, 'Hello from React!');
+            };
+            
+            root.render(createElement(TestComponent));
+        }
+    </script>
+    <script src="http://localhost:5173/node_modules/react/umd/react.development.js"></script>
+    <script src="http://localhost:5173/node_modules/react-dom/umd/react-dom.development.js"></script>
+</body>
+</html>
