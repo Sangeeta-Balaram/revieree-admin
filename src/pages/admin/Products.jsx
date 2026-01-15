@@ -510,31 +510,31 @@ const Products = () => {
                     <td className="px-6 py-4">
                       {product.variations && product.variations.length > 0 ? (
                         <div className="space-y-1">
-                          {product.variations.map((variant) => (
-                            <div key={variant.id} className="text-xs">
+                          {product.variations.map((variant, index) => (
+                            <div key={variant.id || index} className="text-xs">
                               <span className="font-medium text-gray-900">{variant.size || variant.color}</span>
-                              <span className="text-gray-600"> - ₹{variant.price.toLocaleString('en-IN')}</span>
+                              <span className="text-gray-600"> - ₹{(variant.price || 0).toLocaleString('en-IN')}</span>
                             </div>
                           ))}
                         </div>
                       ) : (
                         <span className="text-sm font-medium text-gray-900">
-                          ₹{product.price.toLocaleString('en-IN')}
+                          ₹{(product.price || 0).toLocaleString('en-IN')}
                         </span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {product.variations && product.variations.length > 0 ? (
                         <div className="space-y-1">
-                          {product.variations.map((variant) => (
-                            <div key={variant.id} className="text-xs flex items-center justify-between">
+                          {product.variations.map((variant, index) => (
+                            <div key={variant.id || index} className="text-xs flex items-center justify-between">
                               <span className="text-gray-600">{variant.size || variant.color}:</span>
                               <span className={`font-medium ${
-                                variant.stock === 0 ? 'text-red-600' :
-                                variant.stock < 20 ? 'text-yellow-600' :
+                                (variant.stock || 0) === 0 ? 'text-red-600' :
+                                (variant.stock || 0) < 20 ? 'text-yellow-600' :
                                 'text-green-600'
                               }`}>
-                                {variant.stock} units
+                                {variant.stock || 0} units
                               </span>
                             </div>
                           ))}
