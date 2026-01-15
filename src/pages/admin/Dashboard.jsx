@@ -304,7 +304,7 @@ const Dashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis />
-                <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} />
+                <Tooltip formatter={(value) => `₹${(value || 0).toLocaleString()}`} />
                 <Legend />
                 <Area type="monotone" dataKey="revenue" stroke="#7C3AED" fill="#7C3AED" fillOpacity={0.6} name="Revenue (₹)" />
                 <Area type="monotone" dataKey="sales" stroke="#10B981" fill="#10B981" fillOpacity={0.6} name="Sales" />
@@ -441,7 +441,7 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-gray-900">₹{product.revenue.toLocaleString()}</p>
+                    <p className="font-semibold text-gray-900">₹{(product.revenue || 0).toLocaleString()}</p>
                     <p className="text-xs text-gray-500">Revenue</p>
                   </div>
                 </div>

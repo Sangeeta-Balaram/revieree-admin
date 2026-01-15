@@ -285,7 +285,7 @@ const ProductsPage = () => {
                                   {category === 'fragrances' ? variation.size : variation.color}
                                 </span>
                                 <span className="text-burgundy-700 font-bold">
-                                  ₹{variation.price.toLocaleString('en-IN')}
+                                  ₹{(variation.price || 0).toLocaleString('en-IN')}
                                 </span>
                               </div>
                               <div className="text-xs text-gray-500 mt-1">
@@ -300,7 +300,7 @@ const ProductsPage = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-2xl font-bold text-burgundy-700">
                         {category === 'fragrances' ? '₹' : '₹'}
-                        {product.price.toLocaleString('en-IN')}
+                        {(product.price || 0).toLocaleString('en-IN')}
                       </span>
                       <button
                         onClick={() => handleAddToCart(product)}

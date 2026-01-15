@@ -192,7 +192,7 @@ const Home = () => {
                   </div>
                   <div className="mt-4">
                     <h3 className="font-semibold text-lg text-gray-900">{product.name}</h3>
-                    <p className="text-burgundy-700 font-bold text-xl">₹{product.price.toLocaleString('en-IN')}</p>
+                    <p className="text-burgundy-700 font-bold text-xl">₹{(product.price || 0).toLocaleString('en-IN')}</p>
                   </div>
                 </motion.div>
               ))}

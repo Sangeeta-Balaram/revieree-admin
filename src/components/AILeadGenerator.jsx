@@ -389,7 +389,7 @@ Make it realistic and actionable. These should be real types of businesses that 
                   {lead.dealValue && (
                     <div className="flex items-start space-x-2">
                       <span className="text-gray-500 font-medium min-w-[80px]">Deal Value:</span>
-                      <span className="text-green-600 font-semibold">₹{lead.dealValue.toLocaleString()}</span>
+                      <span className="text-green-600 font-semibold">₹{(lead.dealValue || 0).toLocaleString()}</span>
                     </div>
                   )}
                 </div>
