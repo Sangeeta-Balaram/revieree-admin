@@ -11,6 +11,7 @@ import {
 const Products = () => {
   console.log('Products component is mounting...');
   
+  const [isClient, setIsClient] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,11 +40,19 @@ const Products = () => {
     offerPercentage: '',
   });
 
-  // Load products from localStorage on mount
+  // Check if we're on the client side
   useEffect(() => {
-    loadProducts();
-    loadPermissions();
+    setIsClient(true);
   }, []);
+
+  // Load products from localStorage on mount (client-side only)
+  useEffect(() => {
+    if (isClient) {
+      console.log('Client-side mount detected');
+      loadProducts();
+      loadPermissions();
+    }
+  }, [isClient]);
 
   const loadPermissions = async () => {
     try {
@@ -320,7 +329,11 @@ const Products = () => {
       <ArrowDown size={14} className="text-burgundy-700" />;
   };
 
-  console.log('Products component rendering with:', { products: products.length, userPermissions });
+  console.log('Products component rendering with:', { isClient, products: products.length, userPermissions });
+  
+  if (!isClient) {
+    return <div className="flex items-center justify-center h-64"><p>Initializing...</p></div>;
+  }
   
   if (!userPermissions || userPermissions.length === 0) {
     return <div className="flex items-center justify-center h-64"><p>Loading permissions...</p></div>;
