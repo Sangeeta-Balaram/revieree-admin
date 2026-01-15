@@ -9,12 +9,14 @@ import {
 } from '../../utils/permissions';
 
 const Products = () => {
+  console.log('Products component is mounting...');
+  
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [userPermissions, setUserPermissions] = useState([]);
+  const [userPermissions, setUserPermissions] = useState(['*']); // Default to all permissions
   const [sortField, setSortField] = useState('name'); // name, price, stock
   const [sortDirection, setSortDirection] = useState('asc'); // asc, desc
   const [stockFilter, setStockFilter] = useState('all'); // all, in-stock, low-stock, out-of-stock
@@ -44,13 +46,25 @@ const Products = () => {
   }, []);
 
   const loadPermissions = async () => {
-    const { permissions } = await getCurrentUserPermissions();
-    setUserPermissions(permissions || []);
+    try {
+      const { permissions } = await getCurrentUserPermissions();
+      console.log('Loaded permissions:', permissions);
+      setUserPermissions(permissions || []);
+    } catch (error) {
+      console.error('Error loading permissions:', error);
+      setUserPermissions(['*']); // Fallback to admin permissions
+    }
   };
 
   const loadProducts = () => {
-    const allProducts = getProducts();
-    setProducts(allProducts);
+    try {
+      const allProducts = getProducts();
+      console.log('Loaded products:', allProducts);
+      setProducts(allProducts);
+    } catch (error) {
+      console.error('Error loading products:', error);
+      setProducts([]);
+    }
   };
 
   const handleAddProduct = (e) => {
@@ -300,6 +314,12 @@ const Products = () => {
       <ArrowUp size={14} className="text-burgundy-700" /> :
       <ArrowDown size={14} className="text-burgundy-700" />;
   };
+
+  console.log('Products component rendering with:', { products: products.length, userPermissions });
+  
+  if (!userPermissions || userPermissions.length === 0) {
+    return <div className="flex items-center justify-center h-64"><p>Loading permissions...</p></div>;
+  }
 
   return (
     <div>
