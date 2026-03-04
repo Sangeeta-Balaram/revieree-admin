@@ -1,25 +1,10 @@
 import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Navigation from './components/Navigation';
-import Footer from './components/Footer';
-import Home from './pages/Home';
-import ProductsPage from './pages/ProductsPage';
-import Gifting from './pages/Gifting';
-import Blogs from './pages/Blogs';
-import BlogDetail from './pages/BlogDetail';
-import About from './pages/About';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import Profile from './pages/Profile';
-import ForgotPassword from './pages/ForgotPassword';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminForgotPassword from './pages/admin/AdminForgotPassword';
 import AdminLayout from './pages/admin/AdminLayout';
 import Dashboard from './pages/admin/Dashboard';
 import Products from './pages/admin/Products';
-
-
-import TestCosmetics from './pages/admin/TestCosmetics';
 import AdminBlogs from './pages/admin/Blogs';
 import Newsletter from './pages/admin/Newsletter';
 import Settings from './pages/admin/Settings';
@@ -29,16 +14,6 @@ import EnhancedB2B from './pages/admin/EnhancedB2B';
 import OrdersReturns from './pages/admin/OrdersReturns';
 import AdManagement from './pages/admin/AdManagement';
 import { initializeStorage } from './utils/storage';
-
-function MainLayout({ children }) {
-  return (
-    <div className="flex flex-col min-h-screen">
-      <Navigation />
-      <main className="flex-grow">{children}</main>
-      <Footer />
-    </div>
-  );
-}
 
 // Protected Route Component for Admin
 function ProtectedAdminRoute({ children }) {
@@ -60,11 +35,14 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Redirect root to admin login */}
+        <Route path="/" element={<Navigate to="/admin/login" replace />} />
+
         {/* Admin Login Route (Not Protected) */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
 
-        {/* Protected Admin Routes with AdminLayout (no Navigation/Footer) */}
+        {/* Protected Admin Routes with AdminLayout */}
         <Route
           path="/admin"
           element={
@@ -76,8 +54,6 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="products" element={<Products />} />
-          
-
           <Route path="blogs" element={<AdminBlogs />} />
           <Route path="ai-blog-assistant" element={<AIBlogAssistant />} />
           <Route path="seo-keywords" element={<SEOKeywords />} />
@@ -88,17 +64,8 @@ function App() {
           <Route path="settings" element={<Settings />} />
         </Route>
 
-        {/* Main Site Routes with Navigation and Footer */}
-        <Route path="/" element={<MainLayout><Home /></MainLayout>} />
-        <Route path="/products/:category" element={<MainLayout><ProductsPage /></MainLayout>} />
-        <Route path="/gifting" element={<MainLayout><Gifting /></MainLayout>} />
-        <Route path="/about" element={<MainLayout><About /></MainLayout>} />
-        <Route path="/blogs" element={<MainLayout><Blogs /></MainLayout>} />
-        <Route path="/blogs/:id" element={<MainLayout><BlogDetail /></MainLayout>} />
-        <Route path="/login" element={<MainLayout><Login /></MainLayout>} />
-        <Route path="/signup" element={<MainLayout><Signup /></MainLayout>} />
-        <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
-        <Route path="/forgot-password" element={<MainLayout><ForgotPassword /></MainLayout>} />
+        {/* Catch all - redirect to admin login */}
+        <Route path="*" element={<Navigate to="/admin/login" replace />} />
       </Routes>
     </Router>
   );
