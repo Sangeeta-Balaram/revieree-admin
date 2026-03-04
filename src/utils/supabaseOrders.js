@@ -82,7 +82,15 @@ export const getOrders = async () => {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching orders:', error);
+      throw error;
+    }
+
+    console.log('🔍 getOrders - Fetched from Supabase:', data?.length, 'orders');
+    if (data && data.length > 0) {
+      console.log('🔍 First order from DB:', { id: data[0].id, status: data[0].status });
+    }
     return data || [];
   } catch (error) {
     console.error('Error fetching orders:', error);

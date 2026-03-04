@@ -84,6 +84,8 @@ const OrdersReturns = () => {
       getReturnAnalytics()
     ]);
     console.log('📦 Orders loaded:', ordersData.length);
+    console.log('📋 First order status:', ordersData[0]?.status);
+    console.log('📋 Full order data:', ordersData[0]);
     setOrders(ordersData);
     setReturns(returnsData);
     setOrderAnalytics(orderAnalyticsData);
