@@ -23,6 +23,7 @@ const OrdersReturns = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -77,15 +78,29 @@ const OrdersReturns = () => {
   };
 
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
-    await updateOrder(orderId, { status: newStatus });
-    await loadData();
-    console.log('Order status updated to:', newStatus);
+    setUpdating(true);
+    try {
+      await updateOrder(orderId, { status: newStatus });
+      await loadData();
+      console.log('Order status updated to:', newStatus);
+    } catch (error) {
+      console.error('Error updating order status:', error);
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const handleUpdateReturnStatus = async (returnId, newStatus) => {
-    await updateReturn(returnId, { status: newStatus });
-    await loadData();
-    console.log('Return status updated to:', newStatus);
+    setUpdating(true);
+    try {
+      await updateReturn(returnId, { status: newStatus });
+      await loadData();
+      console.log('Return status updated to:', newStatus);
+    } catch (error) {
+      console.error('Error updating return status:', error);
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const handleExportOrders = () => {
