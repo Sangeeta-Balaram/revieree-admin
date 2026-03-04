@@ -1,22 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Sparkles, ArrowRight, Gift, Newspaper } from 'lucide-react';
 import AIProductFinder from '../components/AIProductFinder';
 import VintageOrnament from '../components/VintageOrnament';
 import { getFeaturedProducts } from '../utils/storage';
 import oldMoneyImg from '../assets/images/perfumes/old-money.jpeg';
-import gangstaImg from '../assets/images/perfumes/gangsta.jpeg';
 
 const Home = () => {
   const [showAIFinder, setShowAIFinder] = useState(false);
-  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const featuredProducts = getFeaturedProducts();
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterMessage, setNewsletterMessage] = useState('');
-
-  useEffect(() => {
-    setFeaturedProducts(getFeaturedProducts());
-  }, []);
 
   const handleNewsletterSubmit = (e) => {
     e.preventDefault();
@@ -164,7 +160,7 @@ const Home = () => {
             </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredProducts.map((product, index) => (
+              {featuredProducts.map((product) => (
                 <motion.div
                   key={product.id}
                   variants={itemVariants}

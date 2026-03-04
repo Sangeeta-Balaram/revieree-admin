@@ -1,22 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { User, Mail, Lock, Calendar, Save, Eye, EyeOff, LogOut } from 'lucide-react';
 import VintageOrnament from '../components/VintageOrnament';
 import { getCurrentUser, updateProfile, changePassword, signOut, isAuthenticated } from '../utils/auth';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => getCurrentUser());
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [profileData, setProfileData] = useState({
-    name: '',
-    email: '',
+  const [profileData, setProfileData] = useState(() => {
+    const currentUser = getCurrentUser();
+    return {
+      name: currentUser?.name || '',
+      email: currentUser?.email || '',
+    };
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -34,13 +36,6 @@ const Profile = () => {
       navigate('/login');
       return;
     }
-
-    const currentUser = getCurrentUser();
-    setUser(currentUser);
-    setProfileData({
-      name: currentUser.name || '',
-      email: currentUser.email || '',
-    });
   }, [navigate]);
 
   const handleProfileUpdate = (e) => {

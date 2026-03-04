@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { TrendingUp, Target, DollarSign, Calendar, Users, Zap, AlertCircle, RefreshCw, CheckCircle } from 'lucide-react';
 
 const AIAdSpecialist = ({ businessData }) => {

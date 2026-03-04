@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Gift, Heart, Sparkles, Package } from 'lucide-react';
 import VintageOrnament from '../components/VintageOrnament';
 

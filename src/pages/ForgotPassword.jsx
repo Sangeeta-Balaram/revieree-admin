@@ -1,12 +1,10 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import VintageOrnament from '../components/VintageOrnament';
 import { getUserByEmail, resetPassword } from '../utils/auth';
 
 const ForgotPassword = () => {
-  const navigate = useNavigate();
   const [step, setStep] = useState(1); // 1: Email, 2: Reset Password, 3: Success
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { Brain, TrendingUp, Target, Users, Lightbulb, RefreshCw, AlertCircle } from 'lucide-react';
 
 const AIB2BCoach = ({ leadsData, pipelineAnalytics }) => {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, MapPin, Building2, Loader2, Download, Plus, Search } from 'lucide-react';
 import { addB2BInquiry } from '../utils/b2bStorage';

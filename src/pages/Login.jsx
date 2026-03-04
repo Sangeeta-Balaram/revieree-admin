@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import VintageOrnament from '../components/VintageOrnament';
 import { signIn, signInWithGoogle } from '../utils/auth';

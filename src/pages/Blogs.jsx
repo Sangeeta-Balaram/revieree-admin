@@ -1,21 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Calendar, User, ArrowRight, Search } from 'lucide-react';
 import { getBlogs } from '../utils/storage';
 import VintageOrnament from '../components/VintageOrnament';
 
 const Blogs = () => {
-  const [blogs, setBlogs] = useState([]);
+  const [blogs] = useState(() => {
+    const allBlogs = getBlogs();
+    return allBlogs.filter(blog => blog.status === 'Published');
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-
-  useEffect(() => {
-    // Only show published blogs on the website
-    const allBlogs = getBlogs();
-    const publishedBlogs = allBlogs.filter(blog => blog.status === 'Published');
-    setBlogs(publishedBlogs);
-  }, []);
 
   const categories = ['all', ...new Set(blogs.map(blog => blog.category))];
 

@@ -8,7 +8,7 @@ import {
   getOrders, getReturns, updateOrder, updateReturn, ORDER_STATUS, RETURN_STATUS,
   getOrderAnalytics, getReturnAnalytics, exportOrdersToCSV, getOrdersNeedingAttention,
   PAYMENT_STATUS, PAYMENT_METHODS
-} from '../../utils/ordersStorage';
+} from '../../utils/supabaseOrders';
 
 const OrdersReturns = () => {
   const [activeTab, setActiveTab] = useState('orders'); // orders, returns, analytics
@@ -63,23 +63,29 @@ const OrdersReturns = () => {
     setFilteredReturns(filtered);
   }, [returns, searchTerm, statusFilter]);
 
-  const loadData = () => {
-    setOrders(getOrders());
-    setReturns(getReturns());
-    setOrderAnalytics(getOrderAnalytics());
-    setReturnAnalytics(getReturnAnalytics());
+  const loadData = async () => {
+    const [ordersData, returnsData, orderAnalyticsData, returnAnalyticsData] = await Promise.all([
+      getOrders(),
+      getReturns(),
+      getOrderAnalytics(),
+      getReturnAnalytics()
+    ]);
+    setOrders(ordersData);
+    setReturns(returnsData);
+    setOrderAnalytics(orderAnalyticsData);
+    setReturnAnalytics(returnAnalyticsData);
   };
 
-  const handleUpdateOrderStatus = (orderId, newStatus) => {
-    updateOrder(orderId, { status: newStatus });
-    loadData();
+  const handleUpdateOrderStatus = async (orderId, newStatus) => {
+    await updateOrder(orderId, { status: newStatus });
+    await loadData();
     alert('Order status updated!');
   };
 
-  const handleUpdateReturnStatus = (returnId, newStatus) => {
-    updateReturn(returnId, { status: newStatus });
-    loadData();
-    alert('Return status updated! Inventory and finance automatically updated.');
+  const handleUpdateReturnStatus = async (returnId, newStatus) => {
+    await updateReturn(returnId, { status: newStatus });
+    await loadData();
+    alert('Return status updated!');
   };
 
   const handleExportOrders = () => {
@@ -133,7 +139,17 @@ const OrdersReturns = () => {
     return colors[status] || 'bg-gray-100 text-gray-700 border-gray-300';
   };
 
-  const needsAttention = getOrdersNeedingAttention();
+  const [needsAttention, setNeedsAttention] = useState([]);
+
+  useEffect(() => {
+    const fetchAttention = async () => {
+      const attention = await getOrdersNeedingAttention();
+      setNeedsAttention(attention);
+    };
+    if (orders.length > 0) {
+      fetchAttention();
+    }
+  }, [orders]);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -245,18 +261,18 @@ const OrdersReturns = () => {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">{order.orderNumber}</h3>
+                    <h3 className="text-lg font-bold text-gray-900">{order.order_number}</h3>
                     <p className="text-sm text-gray-600">
-                      {order.customerName} • {new Date(order.createdAt).toLocaleDateString()}
+                      {order.customer_name} • {new Date(order.created_at).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="flex flex-col items-end space-y-2">
                     <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(order.status)}`}>
                       {order.status}
                     </span>
-                    {order.paymentStatus && (
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getPaymentStatusColor(order.paymentStatus)}`}>
-                        {order.paymentStatus}
+                    {order.payment_status && (
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getPaymentStatusColor(order.payment_status)}`}>
+                        {order.payment_status}
                       </span>
                     )}
                   </div>
@@ -265,16 +281,16 @@ const OrdersReturns = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div className="flex items-center space-x-2 text-sm">
                     <DollarSign size={16} className="text-gray-400" />
-                    <span className="text-gray-700">₹{order.totalAmount?.toLocaleString()}</span>
+                    <span className="text-gray-700">₹{order.total_amount?.toLocaleString()}</span>
                   </div>
                   <div className="flex items-center space-x-2 text-sm">
                     <Package size={16} className="text-gray-400" />
                     <span className="text-gray-700">{order.items?.length || 0} items</span>
                   </div>
-                  {order.trackingNumber && (
+                  {order.tracking_number && (
                     <div className="flex items-center space-x-2 text-sm">
                       <TruckIcon size={16} className="text-gray-400" />
-                      <span className="text-gray-700">{order.trackingNumber}</span>
+                      <span className="text-gray-700">{order.tracking_number}</span>
                     </div>
                   )}
                 </div>
@@ -320,9 +336,9 @@ const OrdersReturns = () => {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">{returnItem.returnNumber}</h3>
+                    <h3 className="text-lg font-bold text-gray-900">{returnItem.return_number}</h3>
                     <p className="text-sm text-gray-600">
-                      Order: {returnItem.orderNumber} • {returnItem.customerName}
+                      Order: {returnItem.order_number} • {returnItem.customer_name}
                     </p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${getReturnStatusColor(returnItem.status)}`}>
@@ -337,7 +353,7 @@ const OrdersReturns = () => {
                   </div>
                   <div className="text-sm">
                     <span className="text-gray-500">Refund Amount:</span>
-                    <p className="text-gray-900 font-medium">₹{returnItem.refundAmount?.toLocaleString()}</p>
+                    <p className="text-gray-900 font-medium">₹{returnItem.refund_amount?.toLocaleString()}</p>
                   </div>
                   <div className="text-sm">
                     <span className="text-gray-500">Items:</span>
@@ -432,7 +448,7 @@ const OrdersReturns = () => {
             {/* Modal Header */}
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{selectedOrder.orderNumber}</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{selectedOrder.order_number}</h2>
                 <p className="text-sm text-gray-600">Order Details</p>
               </div>
               <button
@@ -450,9 +466,9 @@ const OrdersReturns = () => {
                 <span className={`px-4 py-2 rounded-full text-sm font-medium border ${getStatusColor(selectedOrder.status)}`}>
                   {selectedOrder.status}
                 </span>
-                {selectedOrder.paymentStatus && (
-                  <span className={`px-4 py-2 rounded-full text-sm font-medium border ${getPaymentStatusColor(selectedOrder.paymentStatus)}`}>
-                    {selectedOrder.paymentStatus}
+                {selectedOrder.payment_status && (
+                  <span className={`px-4 py-2 rounded-full text-sm font-medium border ${getPaymentStatusColor(selectedOrder.payment_status)}`}>
+                    {selectedOrder.payment_status}
                   </span>
                 )}
               </div>
@@ -465,14 +481,14 @@ const OrdersReturns = () => {
                     <Mail size={16} className="text-gray-400" />
                     <div>
                       <p className="text-xs text-gray-500">Customer</p>
-                      <p className="text-sm font-medium text-gray-900">{selectedOrder.customerName}</p>
+                      <p className="text-sm font-medium text-gray-900">{selectedOrder.customer_name}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Mail size={16} className="text-gray-400" />
                     <div>
                       <p className="text-xs text-gray-500">Email</p>
-                      <p className="text-sm font-medium text-gray-900">{selectedOrder.customerEmail}</p>
+                      <p className="text-sm font-medium text-gray-900">{selectedOrder.customer_email}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -480,7 +496,7 @@ const OrdersReturns = () => {
                     <div>
                       <p className="text-xs text-gray-500">Order Date</p>
                       <p className="text-sm font-medium text-gray-900">
-                        {new Date(selectedOrder.createdAt).toLocaleDateString('en-IN', {
+                        {new Date(selectedOrder.created_at).toLocaleDateString('en-IN', {
                           day: 'numeric',
                           month: 'long',
                           year: 'numeric'
@@ -527,32 +543,32 @@ const OrdersReturns = () => {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal</span>
                     <span className="font-medium text-gray-900">
-                      ₹{(selectedOrder.subtotal || selectedOrder.totalAmount || 0).toLocaleString()}
+                      ₹{(selectedOrder.subtotal || selectedOrder.total_amount || 0).toLocaleString()}
                     </span>
                   </div>
                   {selectedOrder.discount > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">
-                        Discount {selectedOrder.discountCode && `(${selectedOrder.discountCode})`}
+                        Discount {selectedOrder.discount_code && `(${selectedOrder.discount_code})`}
                       </span>
                       <span className="font-medium text-green-600">-₹{selectedOrder.discount.toLocaleString()}</span>
                     </div>
                   )}
                   {selectedOrder.tax > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Tax ({selectedOrder.taxRate || 18}% GST)</span>
+                      <span className="text-gray-600">Tax ({selectedOrder.tax_rate || 18}% GST)</span>
                       <span className="font-medium text-gray-900">₹{selectedOrder.tax.toLocaleString()}</span>
                     </div>
                   )}
-                  {selectedOrder.shippingCharge > 0 && (
+                  {selectedOrder.shipping_charge > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Shipping Charges</span>
-                      <span className="font-medium text-gray-900">₹{selectedOrder.shippingCharge.toLocaleString()}</span>
+                      <span className="font-medium text-gray-900">₹{selectedOrder.shipping_charge.toLocaleString()}</span>
                     </div>
                   )}
                   <div className="pt-2 border-t border-gray-300 flex justify-between">
                     <span className="font-semibold text-gray-900">Total Amount</span>
-                    <span className="font-bold text-lg text-gray-900">₹{selectedOrder.totalAmount?.toLocaleString()}</span>
+                    <span className="font-bold text-lg text-gray-900">₹{selectedOrder.total_amount?.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -565,45 +581,45 @@ const OrdersReturns = () => {
                     <p className="text-xs text-gray-500 mb-1">Payment Method</p>
                     <div className="flex items-center space-x-2">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        selectedOrder.paymentMethod === 'Cash on Delivery' || selectedOrder.paymentMethod === 'COD'
+                        selectedOrder.payment_method === 'Cash on Delivery' || selectedOrder.payment_method === 'COD'
                           ? 'bg-orange-100 text-orange-700'
                           : 'bg-blue-100 text-blue-700'
                       }`}>
-                        {selectedOrder.paymentMethod === 'Cash on Delivery' || selectedOrder.paymentMethod === 'COD' ? 'COD' : 'Online Payment'}
+                        {selectedOrder.payment_method === 'Cash on Delivery' || selectedOrder.payment_method === 'COD' ? 'COD' : 'Online Payment'}
                       </span>
                     </div>
                     <p className="text-sm font-medium text-gray-900 mt-1">
-                      {selectedOrder.paymentMethod || 'Cash on Delivery'}
+                      {selectedOrder.payment_method || 'Cash on Delivery'}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Payment Status</p>
                     <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-                      selectedOrder.paymentStatus === 'Paid' || selectedOrder.paymentStatus === PAYMENT_STATUS.PAID
+                      selectedOrder.payment_status === 'Paid' || selectedOrder.payment_status === PAYMENT_STATUS.PAID
                         ? 'bg-green-100 text-green-700'
-                        : selectedOrder.paymentStatus === 'Failed' || selectedOrder.paymentStatus === PAYMENT_STATUS.FAILED
+                        : selectedOrder.payment_status === 'Failed' || selectedOrder.payment_status === PAYMENT_STATUS.FAILED
                         ? 'bg-red-100 text-red-700'
-                        : selectedOrder.paymentStatus === 'Refunded' || selectedOrder.paymentStatus === PAYMENT_STATUS.REFUNDED
+                        : selectedOrder.payment_status === 'Refunded' || selectedOrder.payment_status === PAYMENT_STATUS.REFUNDED
                         ? 'bg-purple-100 text-purple-700'
-                        : selectedOrder.paymentStatus === 'Partially Refunded' || selectedOrder.paymentStatus === PAYMENT_STATUS.PARTIALLY_REFUNDED
+                        : selectedOrder.payment_status === 'Partially Refunded' || selectedOrder.payment_status === PAYMENT_STATUS.PARTIALLY_REFUNDED
                         ? 'bg-purple-100 text-purple-700'
                         : 'bg-yellow-100 text-yellow-700'
                     }`}>
-                      {selectedOrder.paymentStatus || 'Unpaid'}
+                      {selectedOrder.payment_status || 'Unpaid'}
                     </span>
                   </div>
-                  {selectedOrder.transactionId && (
+                  {selectedOrder.transaction_id && (
                     <div className="md:col-span-2">
                       <p className="text-xs text-gray-500">Transaction ID</p>
-                      <p className="text-sm font-mono font-medium text-gray-900">{selectedOrder.transactionId}</p>
+                      <p className="text-sm font-mono font-medium text-gray-900">{selectedOrder.transaction_id}</p>
                     </div>
                   )}
-                  {(selectedOrder.paymentStatus === 'Refunded' || selectedOrder.paymentStatus === PAYMENT_STATUS.REFUNDED ||
-                    selectedOrder.paymentStatus === 'Partially Refunded' || selectedOrder.paymentStatus === PAYMENT_STATUS.PARTIALLY_REFUNDED) && (
+                  {(selectedOrder.payment_status === 'Refunded' || selectedOrder.payment_status === PAYMENT_STATUS.REFUNDED ||
+                    selectedOrder.payment_status === 'Partially Refunded' || selectedOrder.payment_status === PAYMENT_STATUS.PARTIALLY_REFUNDED) && (
                     <div className="md:col-span-2 bg-purple-100 border border-purple-200 rounded-lg p-3">
                       <p className="text-xs font-semibold text-purple-900 mb-1">Refund Information</p>
                       <p className="text-sm text-purple-800">
-                        {selectedOrder.paymentStatus === 'Partially Refunded' || selectedOrder.paymentStatus === PAYMENT_STATUS.PARTIALLY_REFUNDED
+                        {selectedOrder.payment_status === 'Partially Refunded' || selectedOrder.payment_status === PAYMENT_STATUS.PARTIALLY_REFUNDED
                           ? 'This order has been partially refunded to the customer.'
                           : 'This order has been fully refunded to the customer.'}
                       </p>
@@ -620,15 +636,15 @@ const OrdersReturns = () => {
                     <MapPin size={16} className="text-gray-600" />
                     <h3 className="font-semibold text-gray-900">Shipping Address</h3>
                   </div>
-                  {selectedOrder.shippingAddress && (
+                  {selectedOrder.shipping_address && (
                     <div className="text-sm text-gray-700 space-y-1">
-                      <p>{selectedOrder.shippingAddress.street}</p>
-                      <p>{selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state}</p>
-                      <p>{selectedOrder.shippingAddress.pincode}</p>
-                      {selectedOrder.shippingAddress.phone && (
+                      <p>{selectedOrder.shipping_address.street}</p>
+                      <p>{selectedOrder.shipping_address.city}, {selectedOrder.shipping_address.state}</p>
+                      <p>{selectedOrder.shipping_address.pincode}</p>
+                      {selectedOrder.shipping_address.phone && (
                         <p className="flex items-center space-x-1 mt-2">
                           <Phone size={14} />
-                          <span>{selectedOrder.shippingAddress.phone}</span>
+                          <span>{selectedOrder.shipping_address.phone}</span>
                         </p>
                       )}
                     </div>
@@ -641,13 +657,13 @@ const OrdersReturns = () => {
                     <MapPin size={16} className="text-gray-600" />
                     <h3 className="font-semibold text-gray-900">Billing Address</h3>
                   </div>
-                  {selectedOrder.billingAddress && (
+                  {selectedOrder.billing_address && (
                     <div className="text-sm text-gray-700 space-y-1">
-                      <p>{selectedOrder.billingAddress.street || 'Same as shipping'}</p>
-                      {selectedOrder.billingAddress.city && (
+                      <p>{selectedOrder.billing_address.street || 'Same as shipping'}</p>
+                      {selectedOrder.billing_address.city && (
                         <>
-                          <p>{selectedOrder.billingAddress.city}, {selectedOrder.billingAddress.state}</p>
-                          <p>{selectedOrder.billingAddress.pincode}</p>
+                          <p>{selectedOrder.billing_address.city}, {selectedOrder.billing_address.state}</p>
+                          <p>{selectedOrder.billing_address.pincode}</p>
                         </>
                       )}
                     </div>
@@ -656,20 +672,20 @@ const OrdersReturns = () => {
               </div>
 
               {/* Tracking Information */}
-              {(selectedOrder.trackingNumber || selectedOrder.shippingPartner) && (
+              {(selectedOrder.tracking_number || selectedOrder.shipping_partner) && (
                 <div className="bg-purple-50 rounded-lg p-4">
                   <h3 className="font-semibold text-gray-900 mb-3">Tracking Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {selectedOrder.trackingNumber && (
+                    {selectedOrder.tracking_number && (
                       <div>
                         <p className="text-xs text-gray-500">Tracking Number</p>
-                        <p className="text-sm font-mono font-medium text-gray-900">{selectedOrder.trackingNumber}</p>
+                        <p className="text-sm font-mono font-medium text-gray-900">{selectedOrder.tracking_number}</p>
                       </div>
                     )}
-                    {selectedOrder.shippingPartner && (
+                    {selectedOrder.shipping_partner && (
                       <div>
                         <p className="text-xs text-gray-500">Shipping Partner</p>
-                        <p className="text-sm font-medium text-gray-900">{selectedOrder.shippingPartner}</p>
+                        <p className="text-sm font-medium text-gray-900">{selectedOrder.shipping_partner}</p>
                       </div>
                     )}
                   </div>
@@ -677,11 +693,11 @@ const OrdersReturns = () => {
               )}
 
               {/* Status History */}
-              {selectedOrder.statusHistory && selectedOrder.statusHistory.length > 0 && (
+              {selectedOrder.status_history && selectedOrder.status_history.length > 0 && (
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-3">Order Timeline</h3>
                   <div className="space-y-3">
-                    {selectedOrder.statusHistory.map((history, index) => (
+                    {selectedOrder.status_history.map((history, index) => (
                       <div key={index} className="flex items-start space-x-3">
                         <div className="mt-1">
                           <div className="w-2 h-2 bg-burgundy-600 rounded-full"></div>
@@ -730,8 +746,8 @@ const OrdersReturns = () => {
             {/* Modal Header */}
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{selectedReturn.returnNumber}</h2>
-                <p className="text-sm text-gray-600">Return Details (Order: {selectedReturn.orderNumber})</p>
+                <h2 className="text-2xl font-bold text-gray-900">{selectedReturn.return_number}</h2>
+                <p className="text-sm text-gray-600">Return Details (Order: {selectedReturn.order_number})</p>
               </div>
               <button
                 onClick={() => setSelectedReturn(null)}
@@ -754,8 +770,8 @@ const OrdersReturns = () => {
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900 mb-3">Customer Information</h3>
                 <div className="space-y-2">
-                  <p className="text-sm"><span className="text-gray-500">Name:</span> <span className="font-medium">{selectedReturn.customerName}</span></p>
-                  <p className="text-sm"><span className="text-gray-500">Email:</span> <span className="font-medium">{selectedReturn.customerEmail}</span></p>
+                  <p className="text-sm"><span className="text-gray-500">Name:</span> <span className="font-medium">{selectedReturn.customer_name}</span></p>
+                  <p className="text-sm"><span className="text-gray-500">Email:</span> <span className="font-medium">{selectedReturn.customer_email}</span></p>
                 </div>
               </div>
 
@@ -763,8 +779,8 @@ const OrdersReturns = () => {
               <div className="bg-amber-50 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900 mb-2">Return Reason</h3>
                 <p className="text-sm font-medium text-gray-900">{selectedReturn.reason}</p>
-                {selectedReturn.reasonDetail && (
-                  <p className="text-sm text-gray-600 mt-1">{selectedReturn.reasonDetail}</p>
+                {selectedReturn.reason_detail && (
+                  <p className="text-sm text-gray-600 mt-1">{selectedReturn.reason_detail}</p>
                 )}
               </div>
 
@@ -799,36 +815,36 @@ const OrdersReturns = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <p className="text-xs text-gray-500">Refund Amount</p>
-                    <p className="text-lg font-bold text-gray-900">₹{selectedReturn.refundAmount?.toLocaleString()}</p>
+                    <p className="text-lg font-bold text-gray-900">₹{selectedReturn.refund_amount?.toLocaleString()}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Refund Method</p>
-                    <p className="text-sm font-medium text-gray-900">{selectedReturn.refundMethod || 'Original Payment Method'}</p>
+                    <p className="text-sm font-medium text-gray-900">{selectedReturn.refund_method || 'Original Payment Method'}</p>
                   </div>
                 </div>
               </div>
 
               {/* Pickup Address */}
-              {selectedReturn.pickupAddress && (
+              {selectedReturn.pickup_address && (
                 <div className="bg-gray-50 rounded-lg p-4">
                   <div className="flex items-center space-x-2 mb-3">
                     <MapPin size={16} className="text-gray-600" />
                     <h3 className="font-semibold text-gray-900">Pickup Address</h3>
                   </div>
                   <div className="text-sm text-gray-700 space-y-1">
-                    <p>{selectedReturn.pickupAddress.street}</p>
-                    <p>{selectedReturn.pickupAddress.city}, {selectedReturn.pickupAddress.state}</p>
-                    <p>{selectedReturn.pickupAddress.pincode}</p>
+                    <p>{selectedReturn.pickup_address.street}</p>
+                    <p>{selectedReturn.pickup_address.city}, {selectedReturn.pickup_address.state}</p>
+                    <p>{selectedReturn.pickup_address.pincode}</p>
                   </div>
                 </div>
               )}
 
               {/* Status History */}
-              {selectedReturn.statusHistory && selectedReturn.statusHistory.length > 0 && (
+              {selectedReturn.status_history && selectedReturn.status_history.length > 0 && (
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-3">Return Timeline</h3>
                   <div className="space-y-3">
-                    {selectedReturn.statusHistory.map((history, index) => (
+                    {selectedReturn.status_history.map((history, index) => (
                       <div key={index} className="flex items-start space-x-3">
                         <div className="mt-1">
                           <div className="w-2 h-2 bg-burgundy-600 rounded-full"></div>

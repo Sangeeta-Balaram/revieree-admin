@@ -1,30 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Calendar, User, ArrowLeft, Share2, Heart } from 'lucide-react';
 import { getBlogById, getBlogs } from '../utils/storage';
 
 const BlogDetail = () => {
   const { id } = useParams();
-  const [blog, setBlog] = useState(null);
-  const [relatedBlogs, setRelatedBlogs] = useState([]);
-
-  useEffect(() => {
+  const blog = useState(() => {
     const fetchedBlog = getBlogById(id);
-
-    // Only show published blogs on the website
+    return fetchedBlog?.status === 'Published' ? fetchedBlog : null;
+  })[0];
+  const relatedBlogs = useState(() => {
+    const fetchedBlog = getBlogById(id);
+    
     if (fetchedBlog && fetchedBlog.status === 'Published') {
-      setBlog(fetchedBlog);
-
       const allBlogs = getBlogs();
-      const related = allBlogs
+      return allBlogs
         .filter(b => b.id !== parseInt(id) && b.category === fetchedBlog.category && b.status === 'Published')
         .slice(0, 3);
-      setRelatedBlogs(related);
-    } else {
-      setBlog(null);
     }
-  }, [id]);
+    return [];
+  })[0];
+
+
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {

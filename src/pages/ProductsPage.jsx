@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Heart, ShoppingCart, Search } from 'lucide-react';
 import { getProductsByCategory } from '../utils/storage';
 import { addToCart, addToWishlist, isInWishlist } from '../utils/cart';
@@ -8,16 +7,16 @@ import VintageOrnament from '../components/VintageOrnament';
 
 const ProductsPage = () => {
   const { category } = useParams();
-  const [products, setProducts] = useState([]);
+  const products = useState(() => {
+    const categoryType = category === 'fragrances' ? 'fragrance' : 'cosmetic';
+    return getProductsByCategory(categoryType);
+  })[0];
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('featured');
-  const [wishlistItems, setWishlistItems] = useState(new Set());
-
-  useEffect(() => {
+  const [wishlistItems, setWishlistItems] = useState(() => {
     const categoryType = category === 'fragrances' ? 'fragrance' : 'cosmetic';
     const fetchedProducts = getProductsByCategory(categoryType);
-    setProducts(fetchedProducts);
-
+    
     // Load wishlist status for all products
     const wishlistSet = new Set();
     fetchedProducts.forEach(product => {
@@ -25,8 +24,8 @@ const ProductsPage = () => {
         wishlistSet.add(product.id);
       }
     });
-    setWishlistItems(wishlistSet);
-  }, [category]);
+    return wishlistSet;
+  });
 
   const handleAddToCart = (product, variation = null) => {
     const productToAdd = variation ? { ...product, selectedVariation: variation, price: variation.price } : product;

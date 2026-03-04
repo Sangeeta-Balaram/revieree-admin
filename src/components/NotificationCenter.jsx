@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, X, Package, ShoppingCart, Briefcase, AlertCircle, Check, RotateCcw, Key } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -24,7 +25,7 @@ const NotificationCenter = () => {
   const realtimeSubscription = useRef(null);
 
   // Load notifications with better state management
-  const loadNotifications = useCallback(async (forceRefresh = false) => {
+  const loadNotifications = useCallback(async () => {
     try {
       const allNotifications = await getNotifications();
       const count = await getUnreadCount();
@@ -69,15 +70,12 @@ const NotificationCenter = () => {
   }, [loadNotifications]);
 
   useEffect(() => {
-    // Initial load
-    loadNotifications(true);
-
     // Setup real-time subscription
     const cleanup = setupRealtimeSubscription();
 
     // Fallback polling only if real-time is not available
     if (!isSupabaseConfigured()) {
-      const interval = setInterval(() => loadNotifications(true), 30000);
+      const interval = setInterval(() => loadNotifications(), 30000);
       return () => {
         clearInterval(interval);
         cleanup?.();
