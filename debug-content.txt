@@ -1,9 +1,0 @@
-content around line 1284
-                  Update Cosmetic
-                </button>
-              </div>
-            </form>
-          </motion.div>
-         </div>
-      )}
-    </div>
