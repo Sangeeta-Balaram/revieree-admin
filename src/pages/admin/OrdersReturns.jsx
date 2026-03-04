@@ -78,11 +78,19 @@ const OrdersReturns = () => {
   };
 
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
+    console.log('=== Starting order status update ===');
+    console.log('Order ID:', orderId);
+    console.log('New Status:', newStatus);
     setUpdating(true);
     try {
-      await updateOrder(orderId, { status: newStatus });
-      await loadData();
-      console.log('Order status updated to:', newStatus);
+      const result = await updateOrder(orderId, { status: newStatus });
+      console.log('Update result:', result);
+      if (result) {
+        await loadData();
+        console.log('Order status updated successfully to:', newStatus);
+      } else {
+        console.error('Update failed - no result returned');
+      }
     } catch (error) {
       console.error('Error updating order status:', error);
     } finally {

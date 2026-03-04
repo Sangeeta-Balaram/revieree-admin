@@ -137,16 +137,31 @@ export const getOrdersByStatus = async (status) => {
  */
 export const updateOrder = async (orderId, updates) => {
   try {
-    if (!supabase) throw new Error('Supabase not configured');
+    if (!supabase) {
+      console.error('Supabase not configured');
+      throw new Error('Supabase not configured');
+    }
+
+    console.log('Updating order:', orderId, 'with:', updates);
 
     // Get current order
-    const { data: currentOrder } = await supabase
+    const { data: currentOrder, error: fetchError } = await supabase
       .from('orders')
       .select('*')
       .eq('id', orderId)
       .single();
 
-    if (!currentOrder) throw new Error('Order not found');
+    if (fetchError) {
+      console.error('Error fetching order:', fetchError);
+      throw fetchError;
+    }
+
+    if (!currentOrder) {
+      console.error('Order not found:', orderId);
+      throw new Error('Order not found');
+    }
+
+    console.log('Current order:', currentOrder);
 
     const updatedData = { ...updates };
 
@@ -166,6 +181,8 @@ export const updateOrder = async (orderId, updates) => {
       }
     }
 
+    console.log('Updating with data:', updatedData);
+
     const { data, error } = await supabase
       .from('orders')
       .update(updatedData)
@@ -173,10 +190,16 @@ export const updateOrder = async (orderId, updates) => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase update error:', error);
+      throw error;
+    }
+
+    console.log('Order updated successfully:', data);
     return data;
   } catch (error) {
     console.error('Error updating order:', error);
+    console.error('Error details:', JSON.stringify(error, null, 2));
     return null;
   }
 };
