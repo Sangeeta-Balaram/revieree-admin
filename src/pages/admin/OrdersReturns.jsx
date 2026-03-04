@@ -79,13 +79,13 @@ const OrdersReturns = () => {
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     await updateOrder(orderId, { status: newStatus });
     await loadData();
-    alert('Order status updated!');
+    console.log('Order status updated to:', newStatus);
   };
 
   const handleUpdateReturnStatus = async (returnId, newStatus) => {
     await updateReturn(returnId, { status: newStatus });
     await loadData();
-    alert('Return status updated!');
+    console.log('Return status updated to:', newStatus);
   };
 
   const handleExportOrders = () => {
