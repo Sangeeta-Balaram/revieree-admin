@@ -27,6 +27,17 @@ const OrdersReturns = () => {
 
   useEffect(() => {
     loadData();
+
+    // Check Supabase configuration on load
+    import('../../lib/supabase').then(({ isSupabaseConfigured }) => {
+      if (!isSupabaseConfigured()) {
+        console.error('❌ SUPABASE NOT CONFIGURED! Check environment variables:');
+        console.error('- VITE_SUPABASE_URL');
+        console.error('- VITE_SUPABASE_ANON_KEY');
+      } else {
+        console.log('✅ Supabase configured successfully');
+      }
+    });
   }, []);
 
   useEffect(() => {
