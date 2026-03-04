@@ -24,6 +24,7 @@ const OrdersReturns = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
   const [updating, setUpdating] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -86,10 +87,15 @@ const OrdersReturns = () => {
     console.log('📦 Orders loaded:', ordersData.length);
     console.log('📋 First order status:', ordersData[0]?.status);
     console.log('📋 Full order data:', ordersData[0]);
-    setOrders(ordersData);
-    setReturns(returnsData);
+
+    // Force re-render by creating new array references
+    setOrders([...ordersData]);
+    setReturns([...returnsData]);
     setOrderAnalytics(orderAnalyticsData);
     setReturnAnalytics(returnAnalyticsData);
+
+    // Increment refresh key to force component re-render
+    setRefreshKey(prev => prev + 1);
   };
 
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
@@ -292,7 +298,7 @@ const OrdersReturns = () => {
           ) : (
             filteredOrders.map((order) => (
               <motion.div
-                key={order.id}
+                key={`${order.id}-${refreshKey}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
