@@ -183,20 +183,21 @@ export const updateOrder = async (orderId, updates) => {
 
     console.log('Updating with data:', updatedData);
 
-    const { data, error } = await supabase
+    // Do the update WITHOUT .single() to avoid 406 error
+    const { error } = await supabase
       .from('orders')
       .update(updatedData)
-      .eq('id', orderId)
-      .select()
-      .single();
+      .eq('id', orderId);
 
     if (error) {
       console.error('Supabase update error:', error);
       throw error;
     }
 
-    console.log('Order updated successfully:', data);
-    return data;
+    console.log('Order updated successfully!');
+
+    // Return the updated data manually (since we can't select it back due to RLS)
+    return { ...currentOrder, ...updatedData };
   } catch (error) {
     console.error('Error updating order:', error);
     console.error('Error details:', JSON.stringify(error, null, 2));
@@ -408,15 +409,16 @@ export const updateReturn = async (returnId, updates) => {
       }
     }
 
-    const { data, error } = await supabase
+    // Do the update WITHOUT .single() to avoid 406 error
+    const { error } = await supabase
       .from('returns')
       .update(updatedData)
-      .eq('id', returnId)
-      .select()
-      .single();
+      .eq('id', returnId);
 
     if (error) throw error;
-    return data;
+
+    // Return the updated data manually
+    return { ...currentReturn, ...updatedData };
   } catch (error) {
     console.error('Error updating return:', error);
     return null;
