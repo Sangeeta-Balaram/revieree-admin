@@ -76,12 +76,14 @@ const OrdersReturns = () => {
   }, [returns, searchTerm, statusFilter]);
 
   const loadData = async () => {
+    console.log('📥 Loading fresh data from Supabase...');
     const [ordersData, returnsData, orderAnalyticsData, returnAnalyticsData] = await Promise.all([
       getOrders(),
       getReturns(),
       getOrderAnalytics(),
       getReturnAnalytics()
     ]);
+    console.log('📦 Orders loaded:', ordersData.length);
     setOrders(ordersData);
     setReturns(returnsData);
     setOrderAnalytics(orderAnalyticsData);
@@ -332,8 +334,12 @@ const OrdersReturns = () => {
                 <div className="flex items-center space-x-3">
                   <select
                     value={order.status}
-                    onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                    onChange={(e) => {
+                      console.log('🔄 Dropdown changed! Order ID:', order.id, 'New value:', e.target.value);
+                      handleUpdateOrderStatus(order.id, e.target.value);
+                    }}
                     className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B0000]"
+                    disabled={updating}
                   >
                     {Object.values(ORDER_STATUS).map((status) => (
                       <option key={status} value={status}>{status}</option>
