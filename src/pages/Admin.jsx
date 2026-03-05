@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, FileText, Plus, Edit, Trash2, X, Save } from 'lucide-react';
+import { Package, FileText, Plus, Edit, Trash2, X, Save, Bell, XCircle, AlertTriangle, CheckCircle } from 'lucide-react';
 import {
   getProducts,
   addProduct,
@@ -20,6 +20,11 @@ const Admin = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
+  const [notifications, setNotifications] = useState(() => {
+    const stored = localStorage.getItem('admin_notifications');
+    return stored ? JSON.parse(stored) : [];
+  });
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -28,7 +33,57 @@ const Admin = () => {
   const loadData = () => {
     setProducts(getProducts());
     setBlogs(getBlogs());
+    checkLowStock();
   };
+
+  // Check for low stock products
+  const checkLowStock = () => {
+    const allProducts = getProducts();
+    const lowStockProducts = allProducts.filter(p => p.stock && p.stock < 5);
+    
+    if (lowStockProducts.length > 0) {
+      lowStockProducts.forEach(product => {
+        const exists = notifications.find(n => 
+          n.type === 'low_stock' && n.productId === product.id
+        );
+        if (!exists) {
+          addNotification({
+            type: 'low_stock',
+            title: 'Low Stock Alert',
+            message: `${product.name} is running low (${product.stock} left)`,
+            productId: product.id
+          });
+        }
+      });
+    }
+  };
+
+  const addNotification = (notification) => {
+    const newNotification = {
+      id: Date.now(),
+      ...notification,
+      timestamp: new Date().toISOString(),
+      read: false
+    };
+    const updated = [newNotification, ...notifications];
+    setNotifications(updated);
+    localStorage.setItem('admin_notifications', JSON.stringify(updated));
+  };
+
+  const markAsRead = (id) => {
+    const updated = notifications.map(n => 
+      n.id === id ? { ...n, read: true } : n
+    );
+    setNotifications(updated);
+    localStorage.setItem('admin_notifications', JSON.stringify(updated));
+  };
+
+  const clearNotifications = () => {
+    setNotifications([]);
+    localStorage.setItem('admin_notifications', JSON.stringify([]));
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleOpenModal = (item = null, type = 'product') => {
     setEditingItem(item);
@@ -111,27 +166,87 @@ const Admin = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-8 flex justify-between items-start"
         >
-          <img src={logo} alt="Revieree" className="h-16 w-16 rounded-full object-cover mb-4 mx-auto" />
-          <h1 className="text-4xl font-serif font-bold text-gray-900 mb-2">
-            Admin Panel
-          </h1>
-          <p className="text-gray-600">Manage your products and blog posts</p>
+          <div>
+            <img src={logo} alt="Revieree" className="h-16 w-16 rounded-full object-cover mb-4 mx-auto" />
+            <h1 className="text-4xl font-serif font-bold text-gray-900 mb-2">
+              Admin Panel
+            </h1>
+            <p className="text-gray-600">Manage your products and blog posts</p>
+          </div>
+          
+          {/* Notification Bell */}
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative p-2 text-gray-600 hover:text-gray-900"
+            >
+              <Bell size={24} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            
+            {/* Notifications Dropdown */}
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
+                <div className="p-3 border-b flex justify-between items-center">
+                  <span className="font-semibold">Notifications</span>
+                  {notifications.length > 0 && (
+                    <button 
+                      onClick={clearNotifications}
+                      className="text-xs text-red-600 hover:text-red-800"
+                    >
+                      Clear all
+                    </button>
+                  )}
+                </div>
+                {notifications.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500">
+                    No notifications
+                  </div>
+                ) : (
+                  notifications.map(n => (
+                    <div 
+                      key={n.id}
+                      className={`p-3 border-b hover:bg-gray-50 cursor-pointer ${!n.read ? 'bg-blue-50' : ''}`}
+                      onClick={() => markAsRead(n.id)}
+                    >
+                      <div className="flex items-start space-x-2">
+                        {n.type === 'low_stock' && <AlertTriangle size={16} className="text-orange-500 mt-1" />}
+                        {n.type === 'new_order' && <CheckCircle size={16} className="text-green-500 mt-1" />}
+                        {n.type === 'cancelled' && <XCircle size={16} className="text-red-500 mt-1" />}
+                        <div>
+                          <p className="font-medium text-sm">{n.title}</p>
+                          <p className="text-xs text-gray-600">{n.message}</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {new Date(n.timestamp).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
         </motion.div>
 
         {/* Tabs */}
-        <div className="flex space-x-4 mb-8 border-b">
+        <div className="flex space-x-2 md:space-x-4 mb-8 border-b overflow-x-auto">
           <button
             onClick={() => setActiveTab('products')}
-            className={`px-6 py-3 font-medium transition-colors relative ${
+            className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${
               activeTab === 'products'
                 ? 'text-burgundy-700'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
             <div className="flex items-center space-x-2">
-              <Package size={20} />
+              <Package size={18} />
               <span>Products</span>
             </div>
             {activeTab === 'products' && (
@@ -144,14 +259,14 @@ const Admin = () => {
 
           <button
             onClick={() => setActiveTab('blogs')}
-            className={`px-6 py-3 font-medium transition-colors relative ${
+            className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${
               activeTab === 'blogs'
                 ? 'text-burgundy-700'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
             <div className="flex items-center space-x-2">
-              <FileText size={20} />
+              <FileText size={18} />
               <span>Blogs</span>
             </div>
             {activeTab === 'blogs' && (
