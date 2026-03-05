@@ -1,17 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = 'https://uecgqdhxraxgupadghjm.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlY2dxZGh4cmF4Z3VwYWRnaGptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxMzkyNTIsImV4cCI6MjA4MzcxNTI1Mn0.4KlhXcVW_42l8WttZRO6C5hhC692R0OE8UKJZmu-2Cs';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase credentials not found. Using localStorage fallback.');
-}
-
-export const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
-
-// Check if Supabase is configured
-export const isSupabaseConfigured = () => {
-  return supabase !== null;
-};
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
