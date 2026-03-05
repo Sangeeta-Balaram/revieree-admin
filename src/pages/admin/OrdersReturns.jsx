@@ -588,36 +588,54 @@ const OrdersReturns = () => {
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900 mb-3">Pricing Details</h3>
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium text-gray-900">
-                      ₹{(selectedOrder.subtotal || selectedOrder.total_amount || 0).toLocaleString()}
-                    </span>
-                  </div>
-                  {selectedOrder.discount > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">
-                        Discount {selectedOrder.discount_code && `(${selectedOrder.discount_code})`}
-                      </span>
-                      <span className="font-medium text-green-600">-₹{selectedOrder.discount.toLocaleString()}</span>
-                    </div>
-                  )}
-                  {selectedOrder.tax > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Tax ({selectedOrder.tax_rate || 18}% GST)</span>
-                      <span className="font-medium text-gray-900">₹{selectedOrder.tax.toLocaleString()}</span>
-                    </div>
-                  )}
-                  {selectedOrder.shipping_charge > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Shipping Charges</span>
-                      <span className="font-medium text-gray-900">₹{selectedOrder.shipping_charge.toLocaleString()}</span>
-                    </div>
-                  )}
-                  <div className="pt-2 border-t border-gray-300 flex justify-between">
-                    <span className="font-semibold text-gray-900">Total Amount</span>
-                    <span className="font-bold text-lg text-gray-900">₹{selectedOrder.total_amount?.toLocaleString()}</span>
-                  </div>
+                  {/* Calculate tax-inclusive pricing */}
+                  {(() => {
+                    const total = selectedOrder.total_amount || 0;
+                    const subtotal = selectedOrder.subtotal || 0;
+                    const discount = selectedOrder.discount || 0;
+                    const shipping = selectedOrder.shipping_charge || 0;
+                    const taxRate = selectedOrder.tax_rate || 18;
+                    
+                    // Calculate base price (before tax) from total
+                    const basePrice = total > 0 ? Math.round(total / (1 + taxRate/100)) : 0;
+                    const taxAmount = total - basePrice - shipping + discount;
+                    
+                    return (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Base Price (Excl. Tax)</span>
+                          <span className="font-medium text-gray-900">
+                            ₹{basePrice.toLocaleString()}
+                          </span>
+                        </div>
+                        {discount > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">
+                              Discount {selectedOrder.discount_code && `(${selectedOrder.discount_code})`}
+                            </span>
+                            <span className="font-medium text-green-600">-₹{discount.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {taxAmount > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Tax ({taxRate}% GST)</span>
+                            <span className="font-medium text-gray-900">₹{taxAmount.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {shipping > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Shipping Charges</span>
+                            <span className="font-medium text-gray-900">₹{shipping.toLocaleString()}</span>
+                          </div>
+                        )}
+                        <div className="pt-2 border-t border-gray-300 flex justify-between">
+                          <span className="font-semibold text-gray-900">Total (Incl. Tax)</span>
+                          <span className="font-bold text-lg text-gray-900">₹{total.toLocaleString()}</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">* All prices are inclusive of GST</p>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
