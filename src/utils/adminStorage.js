@@ -42,7 +42,9 @@ const syncProductToSupabase = async (product, operation = 'upsert') => {
     try {
         const websiteProduct = toWebsiteProduct(product);
         if (operation === 'delete') {
-            await supabase.from('products').delete().eq('id', product.supabaseId);
+            if (product.supabaseId) {
+                await supabase.from('products').delete().eq('id', product.supabaseId);
+            }
         } else if (product.supabaseId) {
             const { error } = await supabase
                 .from('products')
@@ -60,7 +62,7 @@ const syncProductToSupabase = async (product, operation = 'upsert') => {
         }
     } catch (error) {
         console.error('Supabase sync error (product):', error);
-        return null;
+        throw error;
     }
 };
 
@@ -69,7 +71,9 @@ const syncBlogToSupabase = async (blog, operation = 'upsert') => {
     try {
         const websiteBlog = toWebsiteBlog(blog);
         if (operation === 'delete') {
-            await supabase.from('blogs').delete().eq('id', blog.supabaseId);
+            if (blog.supabaseId) {
+                await supabase.from('blogs').delete().eq('id', blog.supabaseId);
+            }
         } else if (blog.supabaseId) {
             const { error } = await supabase
                 .from('blogs')
@@ -87,7 +91,7 @@ const syncBlogToSupabase = async (blog, operation = 'upsert') => {
         }
     } catch (error) {
         console.error('Supabase sync error (blog):', error);
-        return null;
+        throw error;
     }
 };
   
@@ -544,18 +548,23 @@ const syncBlogToSupabase = async (blog, operation = 'upsert') => {
   // ======================
 
   export const migrateToSupabase = async () => {
-    const results = { products: { success: 0, failed: 0 }, blogs: { success: 0, failed: 0 } };
+    const results = { products: { success: 0, failed: 0, errors: [] }, blogs: { success: 0, failed: 0, errors: [] } };
     
     // Migrate products
     const products = getProducts();
     for (const product of products) {
       if (!product.supabaseId) {
-        const supabaseId = await syncProductToSupabase(product);
-        if (supabaseId) {
-          product.supabaseId = supabaseId;
-          results.products.success++;
-        } else {
+        try {
+          const supabaseId = await syncProductToSupabase(product);
+          if (supabaseId) {
+            product.supabaseId = supabaseId;
+            results.products.success++;
+          } else {
+            results.products.failed++;
+          }
+        } catch (error) {
           results.products.failed++;
+          results.products.errors.push(`Product "${product.name}": ${error.message}`);
         }
       }
     }
@@ -565,12 +574,17 @@ const syncBlogToSupabase = async (blog, operation = 'upsert') => {
     const blogs = getBlogs();
     for (const blog of blogs) {
       if (!blog.supabaseId) {
-        const supabaseId = await syncBlogToSupabase(blog);
-        if (supabaseId) {
-          blog.supabaseId = supabaseId;
-          results.blogs.success++;
-        } else {
+        try {
+          const supabaseId = await syncBlogToSupabase(blog);
+          if (supabaseId) {
+            blog.supabaseId = supabaseId;
+            results.blogs.success++;
+          } else {
+            results.blogs.failed++;
+          }
+        } catch (error) {
           results.blogs.failed++;
+          results.blogs.errors.push(`Blog "${blog.title}": ${error.message}`);
         }
       }
     }

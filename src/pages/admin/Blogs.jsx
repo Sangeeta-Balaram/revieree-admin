@@ -76,7 +76,15 @@ const Blogs = () => {
   const handleMigrateToSupabase = async () => {
     if (window.confirm('This will sync all local blogs to Supabase. Continue?')) {
       const results = await migrateToSupabase();
-      alert(`Migration complete!\nProducts: ${results.products.success} synced, ${results.products.failed} failed\nBlogs: ${results.blogs.success} synced, ${results.blogs.failed} failed`);
+      let message = `Migration complete!\nProducts: ${results.products.success} synced, ${results.products.failed} failed`;
+      if (results.products.errors.length > 0) {
+        message += `\n\nProduct Errors:\n${results.products.errors.slice(0, 3).join('\n')}`;
+      }
+      message += `\n\nBlogs: ${results.blogs.success} synced, ${results.blogs.failed} failed`;
+      if (results.blogs.errors.length > 0) {
+        message += `\n\nBlog Errors:\n${results.blogs.errors.slice(0, 3).join('\n')}`;
+      }
+      alert(message);
       loadBlogs();
     }
   };
