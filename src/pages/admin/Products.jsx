@@ -83,10 +83,11 @@ const Products = () => {
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
+    
     const product = {
       name: newProduct.name,
-      price: parseInt(newProduct.price),
-      stock: parseInt(newProduct.stock),
+      price: newProduct.variations.length === 0 ? parseInt(newProduct.price) : (newProduct.variations[0]?.price || 0),
+      stock: newProduct.variations.length === 0 ? parseInt(newProduct.stock) : newProduct.variations.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0),
       category: selectedCategory === 'fragrances' ? 'fragrance' : 'cosmetics',
       subcategory: newProduct.subcategory,
       description: newProduct.description,
@@ -94,6 +95,7 @@ const Products = () => {
       images: newProduct.images.length > 0 ? newProduct.images : ['https://images.unsplash.com/photo-1594035910387-fea47794261f?w=500&h=500&fit=crop'],
       video: newProduct.video,
       variations: newProduct.variations,
+      totalStock: newProduct.variations.length > 0 ? newProduct.variations.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0) : parseInt(newProduct.stock),
       featured: newProduct.featured,
       hasOffer: newProduct.hasOffer,
       offerPercentage: newProduct.hasOffer ? parseInt(newProduct.offerPercentage) : 0,
@@ -728,6 +730,7 @@ const Products = () => {
                    />
                  </div>
 
+                 {newProduct.variations.length === 0 && (
                  <div>
                    <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹) *</label>
                    <input
@@ -739,6 +742,13 @@ const Products = () => {
                      required
                    />
                  </div>
+                 )}
+
+                 {newProduct.variations.length > 0 && (
+                 <div className="flex items-center">
+                   <span className="text-sm text-gray-500">Price will be set per variation</span>
+                 </div>
+                 )}
 
                  <div>
                    <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -769,19 +779,27 @@ const Products = () => {
                    </select>
                  </div>
 
-                 <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                     Stock Quantity *
-                   </label>
-                   <input
-                     type="number"
-                     value={newProduct.stock}
-                     onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
-                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-burgundy-700 focus:border-transparent"
-                     placeholder="e.g., 50"
-                     required
-                   />
-                 </div>
+                 {newProduct.variations.length === 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Stock Quantity *
+                    </label>
+                    <input
+                      type="number"
+                      value={newProduct.stock}
+                      onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-burgundy-700 focus:border-transparent"
+                      placeholder="e.g., 50"
+                      required
+                    />
+                  </div>
+                  )}
+
+                  {newProduct.variations.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm text-gray-500">Stock will be set per variation</span>
+                  </div>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
