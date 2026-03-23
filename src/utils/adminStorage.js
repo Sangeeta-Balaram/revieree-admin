@@ -14,17 +14,23 @@ const STORAGE_KEYS = {
   };
 
 // Convert admin product format to Supabase website format
-const toWebsiteProduct = (product) => ({
-    name: product.name,
-    category: product.category,
-    price: product.price,
-    description: product.description || '',
-    image: product.image || product.images?.[0] || '',
-    notes: product.notes || [],
-    shade: product.shade || null,
-    finish: product.finish || null,
-    featured: product.featured || false,
-});
+const toWebsiteProduct = (product) => {
+    let category = product.category;
+    if (category === 'fragrances') category = 'fragrance';
+    if (category === 'cosmetics') category = 'cosmetic';
+    
+    return {
+        name: product.name,
+        category: category,
+        price: product.price,
+        description: product.description || '',
+        image: product.image || product.images?.[0] || '',
+        notes: product.notes || [],
+        shade: product.shade || null,
+        finish: product.finish || null,
+        featured: product.featured || false,
+    };
+};
 
 // Convert admin blog format to Supabase website format
 const toWebsiteBlog = (blog) => ({
