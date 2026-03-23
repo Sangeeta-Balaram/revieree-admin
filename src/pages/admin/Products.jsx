@@ -416,6 +416,7 @@ const Products = () => {
               </label>
               <button
                 onClick={() => {
+                  console.log('Add Product button clicked!');
                   setSelectedCategory('');
                   setShowAddModal(true);
                 }}
