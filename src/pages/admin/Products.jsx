@@ -418,68 +418,68 @@ const Products = () => {
           <h1 className="text-3xl font-serif font-bold text-gray-900">Products</h1>
           <p className="text-gray-600 mt-1">{products.length} products total</p>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex flex-wrap gap-2">
           {hasPermission(userPermissions, PERMISSIONS.EXPORT_DATA) && (
             <>
               <button
                 onClick={handleExportTemplate}
-                className="flex items-center space-x-2 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center space-x-1 border border-gray-300 text-gray-700 px-2 py-1 text-sm rounded hover:bg-gray-50 transition-colors"
               >
-                <Download size={18} />
-                <span>Download Template</span>
+                <Download size={14} />
+                <span>Template</span>
               </button>
               <button
                 onClick={handleExportAll}
-                className="flex items-center space-x-2 border border-burgundy-700 text-burgundy-700 px-4 py-2 rounded-lg hover:bg-burgundy-50 transition-colors"
+                className="flex items-center space-x-1 border border-burgundy-700 text-burgundy-700 px-2 py-1 text-sm rounded hover:bg-burgundy-50 transition-colors"
               >
-                <Download size={18} />
-                <span>Export All</span>
+                <Download size={14} />
+                <span>Export</span>
               </button>
               <button
                 onClick={handleExportSelected}
                 disabled={selectedItems.length === 0}
-                className={`flex items-center space-x-2 border px-4 py-2 rounded-lg transition-colors ${
+                className={`flex items-center space-x-1 border px-2 py-1 text-sm rounded transition-colors ${
                   selectedItems.length > 0
                     ? 'border-blue-600 text-blue-600 hover:bg-blue-50'
                     : 'border-gray-300 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                <Download size={18} />
-                <span>Export Selected ({selectedItems.length})</span>
+                <Download size={14} />
+                <span>Export ({selectedItems.length})</span>
               </button>
               <button
                 onClick={handleDeleteSelected}
                 disabled={selectedItems.length === 0}
-                className={`flex items-center space-x-2 border px-4 py-2 rounded-lg transition-colors ${
+                className={`flex items-center space-x-1 border px-2 py-1 text-sm rounded transition-colors ${
                   selectedItems.length > 0
                     ? 'border-red-600 text-red-600 hover:bg-red-50'
                     : 'border-gray-300 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                <Trash2 size={18} />
-                <span>Delete Selected ({selectedItems.length})</span>
+                <Trash2 size={14} />
+                <span>Delete ({selectedItems.length})</span>
               </button>
               <button
                 onClick={handleMigrateToSupabase}
-                className="flex items-center space-x-2 border border-purple-600 text-purple-600 px-4 py-2 rounded-lg hover:bg-purple-50 transition-colors"
-                title="Sync all products to Supabase for website"
+                className="flex items-center space-x-1 border border-purple-600 text-purple-600 px-2 py-1 text-sm rounded hover:bg-purple-50 transition-colors"
+                title="Sync to Supabase"
               >
                 <span>Cloud Sync</span>
               </button>
               <button
                 onClick={handleSyncFromSupabase}
-                className="flex items-center space-x-2 border border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
-                title="Import products from Supabase to admin"
+                className="flex items-center space-x-1 border border-blue-600 text-blue-600 px-2 py-1 text-sm rounded hover:bg-blue-50 transition-colors"
+                title="Import from Supabase"
               >
-                <span>Sync from Supabase</span>
+                <span>From Supabase</span>
               </button>
             </>
           )}
           {hasPermission(userPermissions, PERMISSIONS.ADD_PRODUCTS) && (
             <>
-              <label className="flex items-center space-x-2 border border-green-700 text-green-700 px-4 py-2 rounded-lg hover:bg-green-50 transition-colors cursor-pointer">
-                <Upload size={18} />
-                <span>Import CSV</span>
+              <label className="flex items-center space-x-1 border border-green-700 text-green-700 px-2 py-1 text-sm rounded hover:bg-green-50 transition-colors cursor-pointer">
+                <Upload size={14} />
+                <span>Import</span>
                 <input
                   type="file"
                   accept=".csv"
@@ -489,14 +489,13 @@ const Products = () => {
               </label>
               <button
                 onClick={() => {
-                  console.log('Add Product button clicked!');
                   setSelectedCategory('');
                   setShowAddModal(true);
                 }}
-                className="flex items-center space-x-2 bg-burgundy-700 text-white px-6 py-3 rounded-lg hover:bg-burgundy-800 transition-colors"
+                className="flex items-center space-x-1 bg-burgundy-700 text-white px-3 py-1 text-sm rounded hover:bg-burgundy-800 transition-colors"
               >
-                <Plus size={20} />
-                <span>Add New Product</span>
+                <Plus size={14} />
+                <span>Add</span>
               </button>
             </>
           )}
@@ -877,7 +876,7 @@ const Products = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Product Image (upload from device)
+                      Product Image URL
                     </label>
                     <div className="space-y-3">
                       {newProduct.images.map((image, index) => (
@@ -885,23 +884,17 @@ const Products = () => {
                           {image && (
                             <img src={image} alt={`Preview ${index + 1}`} className="w-16 h-16 object-cover rounded-lg border" />
                           )}
-                          <label className="flex-1 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                            <span className="text-gray-600">{image ? 'Change Image' : 'Choose Image'}</span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files[0];
-                                if (file) {
-                                  const imageUrl = URL.createObjectURL(file);
-                                  const updatedImages = [...newProduct.images];
-                                  updatedImages[index] = imageUrl;
-                                  setNewProduct({ ...newProduct, images: updatedImages });
-                                }
-                              }}
-                              className="hidden"
-                            />
-                          </label>
+                          <input
+                            type="url"
+                            value={image}
+                            onChange={(e) => {
+                              const updatedImages = [...newProduct.images];
+                              updatedImages[index] = e.target.value;
+                              setNewProduct({ ...newProduct, images: updatedImages });
+                            }}
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-burgundy-700 focus:border-transparent"
+                            placeholder="https://example.com/image.jpg"
+                          />
                           {newProduct.images.length > 1 && (
                             <button
                               type="button"
@@ -1188,34 +1181,29 @@ const Products = () => {
                    </select>
                  </div>
 
-                 <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Product Image (upload from device)
-                    </label>
-                    <div className="space-y-3">
-                      {(editingProduct.images || [editingProduct.image].filter(Boolean)).map((image, index) => (
-                        <div key={index} className="flex items-center space-x-2">
-                          {image && (
-                            <img src={image} alt={`Preview ${index + 1}`} className="w-16 h-16 object-cover rounded-lg border" />
-                          )}
-                          <label className="flex-1 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                            <span className="text-gray-600">{image ? 'Change Image' : 'Choose Image'}</span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files[0];
-                                if (file) {
-                                  const imageUrl = URL.createObjectURL(file);
-                                  const currentImages = editingProduct.images || [editingProduct.image].filter(Boolean);
-                                  const updatedImages = [...currentImages];
-                                  updatedImages[index] = imageUrl;
-                                  setEditingProduct({ ...editingProduct, images: updatedImages });
-                                }
-                              }}
-                              className="hidden"
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Product Image URL
+                     </label>
+                     <div className="space-y-3">
+                       {(editingProduct.images || [editingProduct.image].filter(Boolean)).map((image, index) => (
+                         <div key={index} className="flex items-center space-x-2">
+                           {image && (
+                             <img src={image} alt={`Preview ${index + 1}`} className="w-16 h-16 object-cover rounded-lg border" />
+                           )}
+                           <input
+                             type="url"
+                             value={image}
+                             onChange={(e) => {
+                               const currentImages = editingProduct.images || [editingProduct.image].filter(Boolean);
+                               const updatedImages = [...currentImages];
+                               updatedImages[index] = e.target.value;
+                               setEditingProduct({ ...editingProduct, images: updatedImages });
+                             }}
+                             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-burgundy-700 focus:border-transparent"
+                             placeholder="https://example.com/image.jpg"
                             />
-                          </label>
+                          )}
                           {(editingProduct.images || [editingProduct.image]).length > 1 && (
                             <button
                               type="button"
