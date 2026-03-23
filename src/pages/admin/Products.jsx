@@ -217,6 +217,21 @@ const Products = () => {
     }
   };
 
+  const handleDeleteSelected = async () => {
+    if (selectedItems.length === 0) {
+      alert('Please select products to delete');
+      return;
+    }
+    if (window.confirm(`Are you sure you want to delete ${selectedItems.length} product(s)?`)) {
+      const products = getProducts();
+      const remaining = products.filter(p => !selectedItems.includes(p.id));
+      saveProducts(remaining);
+      setSelectedItems([]);
+      alert(`Deleted ${selectedItems.length} product(s)`);
+      loadProducts();
+    }
+  };
+
   const handleSort = (field) => {
     if (sortField === field) {
       // Toggle direction if same field
@@ -431,6 +446,18 @@ const Products = () => {
               >
                 <Download size={18} />
                 <span>Export Selected ({selectedItems.length})</span>
+              </button>
+              <button
+                onClick={handleDeleteSelected}
+                disabled={selectedItems.length === 0}
+                className={`flex items-center space-x-2 border px-4 py-2 rounded-lg transition-colors ${
+                  selectedItems.length > 0
+                    ? 'border-red-600 text-red-600 hover:bg-red-50'
+                    : 'border-gray-300 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <Trash2 size={18} />
+                <span>Delete Selected ({selectedItems.length})</span>
               </button>
               <button
                 onClick={handleMigrateToSupabase}
