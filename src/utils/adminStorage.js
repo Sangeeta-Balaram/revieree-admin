@@ -25,7 +25,7 @@ const toWebsiteProduct = (product) => {
         price: product.price,
         description: product.description || '',
         image: product.image || (product.images && product.images[0]) || '',
-        notes: product.notes || [],
+        notes: Array.isArray(product.notes) ? product.notes.join(', ') : (product.notes || ''),
         shade: product.subcategory === 'lipstick' || product.subcategory === 'kajal' ? product.shade : null,
         finish: product.subcategory === 'lipstick' || product.subcategory === 'mascara' ? product.finish : null,
         featured: product.featured || false,
