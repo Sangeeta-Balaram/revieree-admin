@@ -24,10 +24,10 @@ const toWebsiteProduct = (product) => {
         category: category,
         price: product.price,
         description: product.description || '',
-        image: product.image || product.images?.[0] || '',
+        image: product.image || (product.images && product.images[0]) || '',
         notes: product.notes || [],
-        shade: product.shade || null,
-        finish: product.finish || null,
+        shade: product.subcategory === 'lipstick' || product.subcategory === 'kajal' ? product.shade : null,
+        finish: product.subcategory === 'lipstick' || product.subcategory === 'mascara' ? product.finish : null,
         featured: product.featured || false,
     };
 };

@@ -490,7 +490,7 @@ const Products = () => {
                     </div>
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Description
+                    Category / Subcategory
                   </th>
                   <th
                     onClick={() => handleSort('price')}
@@ -512,6 +512,9 @@ const Products = () => {
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Featured
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Actions
@@ -548,25 +551,16 @@ const Products = () => {
                               <Package className="text-burgundy-700" size={20} />
                             </div>
                           )}
-                          {product.video && (
-                            <div className="absolute bottom-0 right-0 bg-red-600 text-white p-1 rounded-tl">
-                              <span className="text-xs">📹</span>
-                            </div>
-                          )}
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                          <div className="text-xs text-gray-500">
-                            {product.subcategory && <span className="mr-2">{product.subcategory}</span>}
-                            {product.category && <span className="mr-2">{product.category}</span>}
-                            {product.images && <span>{product.images.length} images</span>}
-                            {product.video && <span className="ml-1">• Video</span>}
-                          </div>
+                          {product.images && <span className="text-xs text-gray-500">{product.images.length} image(s)</span>}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-gray-600 line-clamp-2 max-w-xs">{product.description}</p>
+                      <span className="text-sm font-medium text-gray-900 capitalize">{product.category}</span>
+                      {product.subcategory && <span className="text-xs text-gray-500 block">{product.subcategory}</span>}
                     </td>
                     <td className="px-6 py-4">
                       {product.variations && product.variations.length > 0 ? (
@@ -619,6 +613,13 @@ const Products = () => {
                       >
                         {getStockStatus(product.totalStock || product.stock)}
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {product.featured ? (
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Featured</span>
+                      ) : (
+                        <span className="text-gray-400 text-xs">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
@@ -782,50 +783,59 @@ const Products = () => {
                    />
                  </div>
 
-                 <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                     Product Images (up to 9 images)
-                   </label>
-                   <div className="space-y-3">
-                     {newProduct.images.map((image, index) => (
-                       <div key={index} className="flex items-center space-x-2">
-                         <input
-                           type="url"
-                           value={image}
-                           onChange={(e) => {
-                             const updatedImages = [...newProduct.images];
-                             updatedImages[index] = e.target.value;
-                             setNewProduct({ ...newProduct, images: updatedImages });
-                           }}
-                           className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-burgundy-700 focus:border-transparent"
-                           placeholder={`Image ${index + 1} URL`}
-                         />
-                         {newProduct.images.length > 1 && (
-                           <button
-                             type="button"
-                             onClick={() => {
-                               const updatedImages = newProduct.images.filter((_, i) => i !== index);
-                               setNewProduct({ ...newProduct, images: updatedImages });
-                             }}
-                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                             title="Remove image"
-                           >
-                             <Trash2 size={18} />
-                           </button>
-                         )}
-                       </div>
-                     ))}
-                     {newProduct.images.length < 9 && (
-                       <button
-                         type="button"
-                         onClick={() => setNewProduct({ ...newProduct, images: [...newProduct.images, ''] })}
-                         className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-burgundy-700 hover:text-burgundy-700 transition-colors"
-                       >
-                         + Add Image
-                       </button>
-                     )}
-                   </div>
-                 </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Product Image (upload from device)
+                    </label>
+                    <div className="space-y-3">
+                      {newProduct.images.map((image, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          {image && (
+                            <img src={image} alt={`Preview ${index + 1}`} className="w-16 h-16 object-cover rounded-lg border" />
+                          )}
+                          <label className="flex-1 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span className="text-gray-600">{image ? 'Change Image' : 'Choose Image'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                  const imageUrl = URL.createObjectURL(file);
+                                  const updatedImages = [...newProduct.images];
+                                  updatedImages[index] = imageUrl;
+                                  setNewProduct({ ...newProduct, images: updatedImages });
+                                }
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                          {newProduct.images.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updatedImages = newProduct.images.filter((_, i) => i !== index);
+                                setNewProduct({ ...newProduct, images: updatedImages });
+                              }}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Remove image"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      {newProduct.images.length < 5 && (
+                        <button
+                          type="button"
+                          onClick={() => setNewProduct({ ...newProduct, images: [...newProduct.images, ''] })}
+                          className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-burgundy-700 hover:text-burgundy-700 transition-colors"
+                        >
+                          + Add Another Image
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
                  <div>
                    <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1088,53 +1098,62 @@ const Products = () => {
 
                  <div>
                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                     Product Images (up to 9 images)
-                   </label>
-                   <div className="space-y-3">
-                     {(editingProduct.images || [editingProduct.image].filter(Boolean)).map((image, index) => (
-                       <div key={index} className="flex items-center space-x-2">
-                         <input
-                           type="url"
-                           value={image}
-                           onChange={(e) => {
-                             const currentImages = editingProduct.images || [editingProduct.image].filter(Boolean);
-                             const updatedImages = [...currentImages];
-                             updatedImages[index] = e.target.value;
-                             setEditingProduct({ ...editingProduct, images: updatedImages });
-                           }}
-                           className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-burgundy-700 focus:border-transparent"
-                           placeholder={`Image ${index + 1} URL`}
-                         />
-                         {(editingProduct.images || [editingProduct.image]).length > 1 && (
-                           <button
-                             type="button"
-                             onClick={() => {
-                               const currentImages = editingProduct.images || [editingProduct.image].filter(Boolean);
-                               const updatedImages = currentImages.filter((_, i) => i !== index);
-                               setEditingProduct({ ...editingProduct, images: updatedImages });
-                             }}
-                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                             title="Remove image"
-                           >
-                             <Trash2 size={18} />
-                           </button>
-                         )}
-                       </div>
-                     ))}
-                     {(editingProduct.images || [editingProduct.image]).length < 9 && (
-                       <button
-                         type="button"
-                         onClick={() => {
-                           const currentImages = editingProduct.images || [editingProduct.image].filter(Boolean);
-                           setEditingProduct({ ...editingProduct, images: [...currentImages, ''] });
-                         }}
-                         className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-burgundy-700 hover:text-burgundy-700 transition-colors"
-                       >
-                         + Add Image
-                       </button>
-                     )}
-                   </div>
-                 </div>
+                      Product Image (upload from device)
+                    </label>
+                    <div className="space-y-3">
+                      {(editingProduct.images || [editingProduct.image].filter(Boolean)).map((image, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          {image && (
+                            <img src={image} alt={`Preview ${index + 1}`} className="w-16 h-16 object-cover rounded-lg border" />
+                          )}
+                          <label className="flex-1 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                            <span className="text-gray-600">{image ? 'Change Image' : 'Choose Image'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                  const imageUrl = URL.createObjectURL(file);
+                                  const currentImages = editingProduct.images || [editingProduct.image].filter(Boolean);
+                                  const updatedImages = [...currentImages];
+                                  updatedImages[index] = imageUrl;
+                                  setEditingProduct({ ...editingProduct, images: updatedImages });
+                                }
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                          {(editingProduct.images || [editingProduct.image]).length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const currentImages = editingProduct.images || [editingProduct.image].filter(Boolean);
+                                const updatedImages = currentImages.filter((_, i) => i !== index);
+                                setEditingProduct({ ...editingProduct, images: updatedImages });
+                              }}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Remove image"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      {(editingProduct.images || [editingProduct.image]).length < 5 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentImages = editingProduct.images || [editingProduct.image].filter(Boolean);
+                            setEditingProduct({ ...editingProduct, images: [...currentImages, ''] });
+                          }}
+                          className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-burgundy-700 hover:text-burgundy-700 transition-colors"
+                        >
+                          + Add Another Image
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
                  <div>
                    <label className="block text-sm font-medium text-gray-700 mb-2">
