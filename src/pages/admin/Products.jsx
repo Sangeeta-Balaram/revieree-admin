@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Edit, Trash2, Package, Search, Download, Upload, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { getProducts, addProduct, updateProduct, deleteProduct, saveProducts, exportToCSV, parseCSV, migrateToSupabase } from '../../utils/adminStorage';
+import { supabase } from '../../lib/supabase';
 import {
   getCurrentUserPermissions,
   hasPermission,
@@ -175,6 +176,44 @@ const Products = () => {
       }
       alert(message);
       loadProducts();
+    }
+  };
+
+  const handleSyncFromSupabase = async () => {
+    if (window.confirm('This will import products from Supabase to admin. Continue?')) {
+      try {
+        const { data, error } = await supabase.from('products').select('*');
+        if (error) throw error;
+        
+        const importedProducts = data.map(p => ({
+          id: Date.now() + Math.random(),
+          name: p.name,
+          price: parseInt(p.price),
+          stock: 50,
+          category: p.category,
+          subcategory: p.category === 'fragrance' ? 'perfume' : 'lipstick',
+          description: p.description || '',
+          notes: p.notes ? p.notes.split(/[;,]/).map(n => n.trim()) : [],
+          images: p.image ? [p.image] : [],
+          variations: [],
+          featured: p.featured || false,
+          hasOffer: false,
+          offerPercentage: 0,
+          supabaseId: p.id,
+        }));
+        
+        const existingProducts = getProducts();
+        const merged = [...existingProducts, ...importedProducts.filter(ip => 
+          !existingProducts.some(ep => ep.supabaseId === ip.supabaseId)
+        )];
+        
+        saveProducts(merged);
+        alert(`Imported ${importedProducts.length} products from Supabase!`);
+        loadProducts();
+      } catch (error) {
+        console.error('Sync error:', error);
+        alert('Failed to sync from Supabase: ' + error.message);
+      }
     }
   };
 
@@ -399,6 +438,13 @@ const Products = () => {
                 title="Sync all products to Supabase for website"
               >
                 <span>Cloud Sync</span>
+              </button>
+              <button
+                onClick={handleSyncFromSupabase}
+                className="flex items-center space-x-2 border border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
+                title="Import products from Supabase to admin"
+              >
+                <span>Sync from Supabase</span>
               </button>
             </>
           )}
