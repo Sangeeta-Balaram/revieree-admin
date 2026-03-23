@@ -19,16 +19,28 @@ const toWebsiteProduct = (product) => {
     if (category === 'fragrances') category = 'fragrance';
     if (category === 'cosmetics') category = 'cosmetic';
     
+    const isFragrance = category === 'fragrance';
+    
+    const variations = (product.variations || []).map((v, index) => ({
+        id: v.id || `var-${Date.now()}-${index}`,
+        [isFragrance ? 'size' : 'shade']: v.size || v.color || v.shade || '',
+        price: v.price || product.price,
+        stock: v.stock || 0,
+    }));
+    
     return {
         name: product.name,
         category: category,
+        subcategory: product.subcategory || '',
         price: product.price,
         description: product.description || '',
         image: product.image || (product.images && product.images[0]) || '',
+        images: product.images || [],
         notes: Array.isArray(product.notes) ? product.notes.join(', ') : (product.notes || ''),
-        shade: product.subcategory === 'lipstick' || product.subcategory === 'kajal' ? product.shade : null,
-        finish: product.subcategory === 'lipstick' || product.subcategory === 'mascara' ? product.finish : null,
+        variations: variations,
         featured: product.featured || false,
+        hasOffer: product.hasOffer || false,
+        offerPercentage: product.offerPercentage || 0,
     };
 };
 
@@ -51,13 +63,15 @@ const syncProductToSupabase = async (product, operation = 'upsert') => {
             if (product.supabaseId) {
                 await supabase.from('products').delete().eq('id', product.supabaseId);
             }
-        } else if (product.supabaseId) {
+            return product.supabaseId;
+        } else if (operation === 'update' && product.supabaseId) {
             const { error } = await supabase
                 .from('products')
                 .update({ ...websiteProduct, updated_at: new Date().toISOString() })
                 .eq('id', product.supabaseId);
             if (error) throw error;
-        } else {
+            return product.supabaseId;
+        } else if (operation === 'insert' || !product.supabaseId) {
             const { data, error } = await supabase
                 .from('products')
                 .insert(websiteProduct)
@@ -65,6 +79,14 @@ const syncProductToSupabase = async (product, operation = 'upsert') => {
                 .single();
             if (error) throw error;
             return data?.id;
+        } else if (product.supabaseId) {
+            // Update existing
+            const { error } = await supabase
+                .from('products')
+                .update({ ...websiteProduct, updated_at: new Date().toISOString() })
+                .eq('id', product.supabaseId);
+            if (error) throw error;
+            return product.supabaseId;
         }
     } catch (error) {
         console.error('Supabase sync error (product):', error);
@@ -121,15 +143,18 @@ const syncBlogToSupabase = async (blog, operation = 'upsert') => {
   
   export const addProduct = async (product) => {
     const products = getProducts();
+    const variations = (product.variations || []).map((v, i) => ({
+      ...v,
+      id: v.id || `var-${Date.now()}-${i}`,
+    }));
     const newProduct = {
       ...product,
-      id: Date.now(), // Generate unique ID
+      id: Date.now(),
       createdAt: new Date().toISOString(),
-      // Ensure backward compatibility
       image: product.images && product.images.length > 0 ? product.images[0] : product.image || '',
       images: product.images || [],
       video: product.video || null,
-      variations: product.variations || [],
+      variations: variations,
     };
     products.push(newProduct);
     saveProducts(products);
@@ -149,9 +174,14 @@ const syncBlogToSupabase = async (blog, operation = 'upsert') => {
     const index = products.findIndex(p => p.id === id);
     if (index !== -1) {
       const updatedProduct = { ...products[index], ...updates };
-      // Ensure backward compatibility for images
       if (updatedProduct.images && updatedProduct.images.length > 0) {
         updatedProduct.image = updatedProduct.images[0];
+      }
+      if (updatedProduct.variations) {
+        updatedProduct.variations = updatedProduct.variations.map((v, i) => ({
+          ...v,
+          id: v.id || `var-${Date.now()}-${i}`,
+        }));
       }
       products[index] = updatedProduct;
       saveProducts(products);
@@ -556,25 +586,37 @@ const syncBlogToSupabase = async (blog, operation = 'upsert') => {
   export const migrateToSupabase = async () => {
     const results = { products: { success: 0, failed: 0, errors: [] }, blogs: { success: 0, failed: 0, errors: [] } };
     
-    // Migrate products
+    // Migrate products - sync ALL products (update existing ones too)
     const products = getProducts();
+    console.log('migrateToSupabase - Found products:', products.length);
     for (const product of products) {
-      if (!product.supabaseId) {
-        try {
-          const supabaseId = await syncProductToSupabase(product);
+      try {
+        console.log('Syncing product:', product.name, 'supabaseId:', product.supabaseId);
+        if (product.supabaseId) {
+          // Update existing product
+          await syncProductToSupabase(product, 'update');
+          results.products.success++;
+          console.log('Updated product:', product.name);
+        } else {
+          // Insert new product
+          const supabaseId = await syncProductToSupabase(product, 'insert');
           if (supabaseId) {
             product.supabaseId = supabaseId;
             results.products.success++;
+            console.log('Inserted product:', product.name, 'supabaseId:', supabaseId);
           } else {
             results.products.failed++;
+            console.log('Failed to insert product:', product.name);
           }
-        } catch (error) {
-          results.products.failed++;
-          results.products.errors.push(`Product "${product.name}": ${error.message}`);
         }
+      } catch (error) {
+        results.products.failed++;
+        results.products.errors.push(`Product "${product.name}": ${error.message}`);
+        console.error('Error syncing product:', product.name, error);
       }
     }
     saveProducts(products);
+    console.log('Migration complete:', results);
     
     // Migrate blogs
     const blogs = getBlogs();

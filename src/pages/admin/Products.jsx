@@ -125,24 +125,37 @@ const Products = () => {
   };
 
   const handleEditClick = (product) => {
+    console.log('handleEditClick - product:', product);
+    console.log('handleEditClick - product.images:', product.images);
+    console.log('handleEditClick - product.image:', product.image);
+    const productImages = product.images?.length > 0 
+      ? product.images 
+      : (product.image ? [product.image] : []);
+    console.log('handleEditClick - productImages:', productImages);
     setEditingProduct({
       ...product,
-      notes: product.notes ? product.notes.join(', ') : '',
-      imageUrl: product.image || '',
+      notes: Array.isArray(product.notes) ? product.notes.join(', ') : (product.notes || ''),
+      images: productImages,
+      image: product.image || productImages[0] || '',
       offerPercentage: product.offerPercentage || '',
     });
+    console.log('handleEditClick - editingProduct.images will be:', productImages);
     setShowEditModal(true);
   };
 
   const handleUpdateProduct = async (e) => {
     e.preventDefault();
+    const currentImages = editingProduct.images?.length > 0 
+      ? editingProduct.images 
+      : (editingProduct.image ? [editingProduct.image] : []);
     const updates = {
       name: editingProduct.name,
       price: parseInt(editingProduct.price),
       stock: parseInt(editingProduct.stock),
       description: editingProduct.description,
       notes: editingProduct.notes.split(',').map(n => n.trim()),
-      images: editingProduct.images || editingProduct.image ? [editingProduct.image] : [],
+      images: currentImages,
+      image: currentImages[0] || '',
       video: editingProduct.video,
       variations: editingProduct.variations || [],
       featured: editingProduct.featured,
@@ -893,22 +906,30 @@ const Products = () => {
                               onChange={async (e) => {
                                 const file = e.target.files[0];
                                 if (file) {
-                                  const fileName = `${Date.now()}-${file.name}`;
+                                  console.log('Adding product - uploading file:', file.name);
+                                  const fileExt = file.name.split('.').pop();
+                                  const fileName = `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+                                  const filePath = `products/${fileName}`;
+                                  console.log('Upload path:', filePath);
                                   const { data, error } = await supabase.storage
                                     .from('products')
-                                    .upload(fileName, file);
+                                    .upload(filePath, file);
                                   
                                   if (error) {
+                                    console.error('Upload error:', error);
                                     alert('Upload failed: ' + error.message);
                                     return;
                                   }
+                                  console.log('Upload success:', data);
                                   
                                   const { data: urlData } = supabase.storage
                                     .from('products')
-                                    .getPublicUrl(fileName);
+                                    .getPublicUrl(filePath);
+                                  console.log('Public URL:', urlData.publicUrl);
                                   
                                   const updatedImages = [...newProduct.images];
                                   updatedImages[index] = urlData.publicUrl;
+                                  console.log('Updated images:', updatedImages);
                                   setNewProduct({ ...newProduct, images: updatedImages });
                                 }
                               }}
@@ -1210,37 +1231,49 @@ const Products = () => {
                            {image && (
                              <img src={image} alt={`Preview ${index + 1}`} className="w-16 h-16 object-cover rounded-lg border" />
                            )}
-                           <label className="flex-1 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors text-center">
-                             <span className="text-gray-600">{image ? 'Change Image' : 'Choose Image'}</span>
-                             <input
-                               type="file"
-                               accept="image/*"
-                               className="hidden"
-                               onChange={async (e) => {
-                                 const file = e.target.files[0];
-                                 if (file) {
-                                   const fileName = `${Date.now()}-${file.name}`;
-                                   const { data, error } = await supabase.storage
-                                     .from('products')
-                                     .upload(fileName, file);
-                                   
-                                   if (error) {
-                                     alert('Upload failed: ' + error.message);
-                                     return;
-                                   }
-                                   
-                                   const { data: urlData } = supabase.storage
-                                     .from('products')
-                                     .getPublicUrl(fileName);
-                                   
-                                   const currentImages = editingProduct.images || [editingProduct.image].filter(Boolean);
-                                   const updatedImages = [...currentImages];
-                                   updatedImages[index] = urlData.publicUrl;
-                                   setEditingProduct({ ...editingProduct, images: updatedImages });
-                                 }
-                               }}
-                             />
-                           </label>
+                            <label className="flex-1 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors text-center">
+                              <span className="text-gray-600">{image ? 'Change Image' : 'Choose Image'}</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                  console.log('Uploading file:', file.name);
+                                  const fileExt = file.name.split('.').pop();
+                                  const fileName = `edit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+                                  const filePath = `products/${fileName}`;
+                                  console.log('Upload path:', filePath);
+                                  const { data, error } = await supabase.storage
+                                    .from('products')
+                                    .upload(filePath, file);
+                                  
+                                  if (error) {
+                                    console.error('Upload error:', error);
+                                    alert('Upload failed: ' + error.message);
+                                    return;
+                                  }
+                                  console.log('Upload success:', data);
+                                  
+                                  const { data: urlData } = supabase.storage
+                                    .from('products')
+                                    .getPublicUrl(filePath);
+                                  console.log('Public URL:', urlData.publicUrl);
+                                  
+                                  const currentImages = editingProduct.images || [editingProduct.image].filter(Boolean);
+                                  const updatedImages = [...currentImages];
+                                  updatedImages[index] = urlData.publicUrl;
+                                  console.log('Updated images:', updatedImages);
+                                  setEditingProduct({ 
+                                    ...editingProduct, 
+                                    images: updatedImages,
+                                    image: updatedImages[0] || ''
+                                  });
+                                }
+                              }}
+                              />
+                            </label>
                           )}
                           {(editingProduct.images || [editingProduct.image]).length > 1 && (
                             <button
