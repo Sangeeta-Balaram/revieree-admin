@@ -1,5 +1,7 @@
 // Admin Storage - Manages products, blogs, and all website content
-// Data is stored in localStorage and can be managed through admin panel
+// Data is stored in localStorage and synced to Supabase for website access
+
+import { supabase } from '../lib/supabase';
 
 const STORAGE_KEYS = {
     PRODUCTS: 'revieree_products', // Same key as storage.js
@@ -10,6 +12,84 @@ const STORAGE_KEYS = {
     ROLES: 'revieree_admin_roles',
     NEWSLETTER_SUBSCRIBERS: 'revieree_newsletter_subscribers',
   };
+
+// Convert admin product format to Supabase website format
+const toWebsiteProduct = (product) => ({
+    name: product.name,
+    category: product.category,
+    price: product.price,
+    description: product.description || '',
+    image: product.image || product.images?.[0] || '',
+    notes: product.notes || [],
+    shade: product.shade || null,
+    finish: product.finish || null,
+    featured: product.featured || false,
+});
+
+// Convert admin blog format to Supabase website format
+const toWebsiteBlog = (blog) => ({
+    title: blog.title,
+    excerpt: blog.excerpt || '',
+    content: blog.content || '',
+    image: blog.image || '',
+    category: blog.category || '',
+    author: blog.author || 'Revieree Team',
+    date: blog.date || new Date().toISOString().split('T')[0],
+});
+
+// Sync product to Supabase
+const syncProductToSupabase = async (product, operation = 'upsert') => {
+    try {
+        const websiteProduct = toWebsiteProduct(product);
+        if (operation === 'delete') {
+            await supabase.from('products').delete().eq('id', product.supabaseId);
+        } else if (product.supabaseId) {
+            const { error } = await supabase
+                .from('products')
+                .update({ ...websiteProduct, updated_at: new Date().toISOString() })
+                .eq('id', product.supabaseId);
+            if (error) throw error;
+        } else {
+            const { data, error } = await supabase
+                .from('products')
+                .insert(websiteProduct)
+                .select('id')
+                .single();
+            if (error) throw error;
+            return data?.id;
+        }
+    } catch (error) {
+        console.error('Supabase sync error (product):', error);
+        return null;
+    }
+};
+
+// Sync blog to Supabase
+const syncBlogToSupabase = async (blog, operation = 'upsert') => {
+    try {
+        const websiteBlog = toWebsiteBlog(blog);
+        if (operation === 'delete') {
+            await supabase.from('blogs').delete().eq('id', blog.supabaseId);
+        } else if (blog.supabaseId) {
+            const { error } = await supabase
+                .from('blogs')
+                .update({ ...websiteBlog, updated_at: new Date().toISOString() })
+                .eq('id', blog.supabaseId);
+            if (error) throw error;
+        } else {
+            const { data, error } = await supabase
+                .from('blogs')
+                .insert(websiteBlog)
+                .select('id')
+                .single();
+            if (error) throw error;
+            return data?.id;
+        }
+    } catch (error) {
+        console.error('Supabase sync error (blog):', error);
+        return null;
+    }
+};
   
   // ======================
   // PRODUCTS MANAGEMENT
@@ -29,7 +109,7 @@ const STORAGE_KEYS = {
     localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
   };
   
-  export const addProduct = (product) => {
+  export const addProduct = async (product) => {
     const products = getProducts();
     const newProduct = {
       ...product,
@@ -43,10 +123,18 @@ const STORAGE_KEYS = {
     };
     products.push(newProduct);
     saveProducts(products);
+    
+    // Sync to Supabase
+    const supabaseId = await syncProductToSupabase(newProduct);
+    if (supabaseId) {
+      newProduct.supabaseId = supabaseId;
+      saveProducts(products);
+    }
+    
     return newProduct;
   };
   
-  export const updateProduct = (id, updates) => {
+  export const updateProduct = async (id, updates) => {
     const products = getProducts();
     const index = products.findIndex(p => p.id === id);
     if (index !== -1) {
@@ -57,13 +145,21 @@ const STORAGE_KEYS = {
       }
       products[index] = updatedProduct;
       saveProducts(products);
+      
+      // Sync to Supabase
+      await syncProductToSupabase(updatedProduct);
+      
       return products[index];
     }
     return null;
   };
   
-  export const deleteProduct = (id) => {
+  export const deleteProduct = async (id) => {
     const products = getProducts();
+    const product = products.find(p => p.id === id);
+    if (product) {
+      await syncProductToSupabase(product, 'delete');
+    }
     const filtered = products.filter(p => p.id !== id);
     saveProducts(filtered);
     return filtered;
@@ -90,7 +186,7 @@ const STORAGE_KEYS = {
     localStorage.setItem(STORAGE_KEYS.BLOGS, JSON.stringify(blogs));
   };
   
-  export const addBlog = (blog) => {
+  export const addBlog = async (blog) => {
     const blogs = getBlogs();
     const newBlog = {
       ...blog,
@@ -100,22 +196,38 @@ const STORAGE_KEYS = {
     };
     blogs.push(newBlog);
     saveBlogs(blogs);
+    
+    // Sync to Supabase
+    const supabaseId = await syncBlogToSupabase(newBlog);
+    if (supabaseId) {
+      newBlog.supabaseId = supabaseId;
+      saveBlogs(blogs);
+    }
+    
     return newBlog;
   };
   
-  export const updateBlog = (id, updates) => {
+  export const updateBlog = async (id, updates) => {
     const blogs = getBlogs();
     const index = blogs.findIndex(b => b.id === id);
     if (index !== -1) {
       blogs[index] = { ...blogs[index], ...updates };
       saveBlogs(blogs);
+      
+      // Sync to Supabase
+      await syncBlogToSupabase(blogs[index]);
+      
       return blogs[index];
     }
     return null;
   };
   
-  export const deleteBlog = (id) => {
+  export const deleteBlog = async (id) => {
     const blogs = getBlogs();
+    const blog = blogs.find(b => b.id === id);
+    if (blog) {
+      await syncBlogToSupabase(blog, 'delete');
+    }
     const filtered = blogs.filter(b => b.id !== id);
     saveBlogs(filtered);
     return filtered;
@@ -425,4 +537,59 @@ const STORAGE_KEYS = {
     const filtered = subscribers.filter(s => s.id !== id);
     saveNewsletterSubscribers(filtered);
     return filtered;
+  };
+
+  // ======================
+  // MIGRATION: localStorage to Supabase
+  // ======================
+
+  export const migrateToSupabase = async () => {
+    const results = { products: { success: 0, failed: 0 }, blogs: { success: 0, failed: 0 } };
+    
+    // Migrate products
+    const products = getProducts();
+    for (const product of products) {
+      if (!product.supabaseId) {
+        const supabaseId = await syncProductToSupabase(product);
+        if (supabaseId) {
+          product.supabaseId = supabaseId;
+          results.products.success++;
+        } else {
+          results.products.failed++;
+        }
+      }
+    }
+    saveProducts(products);
+    
+    // Migrate blogs
+    const blogs = getBlogs();
+    for (const blog of blogs) {
+      if (!blog.supabaseId) {
+        const supabaseId = await syncBlogToSupabase(blog);
+        if (supabaseId) {
+          blog.supabaseId = supabaseId;
+          results.blogs.success++;
+        } else {
+          results.blogs.failed++;
+        }
+      }
+    }
+    saveBlogs(blogs);
+    
+    return results;
+  };
+
+  export const syncFromSupabase = async () => {
+    try {
+      const { data: products, error: pError } = await supabase.from('products').select('*');
+      const { data: blogs, error: bError } = await supabase.from('blogs').select('*');
+      
+      if (pError) throw pError;
+      if (bError) throw bError;
+      
+      return { products: products || [], blogs: blogs || [] };
+    } catch (error) {
+      console.error('Error syncing from Supabase:', error);
+      return { products: [], blogs: [] };
+    }
   };

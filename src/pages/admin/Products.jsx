@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Edit, Trash2, Package, Search, Download, Upload, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
-import { getProducts, addProduct, updateProduct, deleteProduct, saveProducts, exportToCSV, parseCSV } from '../../utils/adminStorage';
+import { getProducts, addProduct, updateProduct, deleteProduct, saveProducts, exportToCSV, parseCSV, migrateToSupabase } from '../../utils/adminStorage';
 import {
   getCurrentUserPermissions,
   hasPermission,
@@ -81,7 +81,7 @@ const Products = () => {
     }
   };
 
-  const handleAddProduct = (e) => {
+  const handleAddProduct = async (e) => {
     e.preventDefault();
     const product = {
       name: newProduct.name,
@@ -99,7 +99,7 @@ const Products = () => {
       offerPercentage: newProduct.hasOffer ? parseInt(newProduct.offerPercentage) : 0,
     };
 
-    addProduct(product);
+    await addProduct(product);
     loadProducts();
 
     setNewProduct({
@@ -131,7 +131,7 @@ const Products = () => {
     setShowEditModal(true);
   };
 
-  const handleUpdateProduct = (e) => {
+  const handleUpdateProduct = async (e) => {
     e.preventDefault();
     const updates = {
       name: editingProduct.name,
@@ -147,15 +147,23 @@ const Products = () => {
       offerPercentage: editingProduct.hasOffer ? parseInt(editingProduct.offerPercentage) : 0,
     };
 
-    updateProduct(editingProduct.id, updates);
+    await updateProduct(editingProduct.id, updates);
     loadProducts();
     setShowEditModal(false);
     setEditingProduct(null);
   };
 
-  const handleDeleteProduct = (id) => {
+  const handleDeleteProduct = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
-      deleteProduct(id);
+      await deleteProduct(id);
+      loadProducts();
+    }
+  };
+
+  const handleMigrateToSupabase = async () => {
+    if (window.confirm('This will sync all local products to Supabase. Continue?')) {
+      const results = await migrateToSupabase();
+      alert(`Migration complete!\nProducts: ${results.products.success} synced, ${results.products.failed} failed\nBlogs: ${results.blogs.success} synced, ${results.blogs.failed} failed`);
       loadProducts();
     }
   };
@@ -374,6 +382,13 @@ const Products = () => {
               >
                 <Download size={18} />
                 <span>Export Selected ({selectedItems.length})</span>
+              </button>
+              <button
+                onClick={handleMigrateToSupabase}
+                className="flex items-center space-x-2 border border-purple-600 text-purple-600 px-4 py-2 rounded-lg hover:bg-purple-50 transition-colors"
+                title="Sync all products to Supabase for website"
+              >
+                <span>Cloud Sync</span>
               </button>
             </>
           )}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Edit, Trash2, FileText, Eye, Calendar, Download, Upload } from 'lucide-react';
-import { getBlogs, addBlog, deleteBlog, updateBlog, exportToCSV, parseCSV } from '../../utils/adminStorage';
+import { getBlogs, addBlog, deleteBlog, updateBlog, exportToCSV, parseCSV, migrateToSupabase } from '../../utils/adminStorage';
 
 const Blogs = () => {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -30,7 +30,7 @@ const Blogs = () => {
     setBlogs(allBlogs);
   };
 
-  const handleAddBlog = (e) => {
+  const handleAddBlog = async (e) => {
     e.preventDefault();
     const blog = {
       title: newBlog.title,
@@ -44,7 +44,7 @@ const Blogs = () => {
       views: 0,
     };
 
-    addBlog(blog);
+    await addBlog(blog);
     loadBlogs();
 
     setNewBlog({
@@ -60,17 +60,25 @@ const Blogs = () => {
     setShowAddModal(false);
   };
 
-  const handleDeleteBlog = (id) => {
+  const handleDeleteBlog = async (id) => {
     if (window.confirm('Are you sure you want to delete this blog post?')) {
-      deleteBlog(id);
+      await deleteBlog(id);
       loadBlogs();
     }
   };
 
-  const togglePublishStatus = (id, currentStatus) => {
+  const togglePublishStatus = async (id, currentStatus) => {
     const newStatus = currentStatus === 'Published' ? 'Draft' : 'Published';
-    updateBlog(id, { status: newStatus });
+    await updateBlog(id, { status: newStatus });
     loadBlogs();
+  };
+
+  const handleMigrateToSupabase = async () => {
+    if (window.confirm('This will sync all local blogs to Supabase. Continue?')) {
+      const results = await migrateToSupabase();
+      alert(`Migration complete!\nProducts: ${results.products.success} synced, ${results.products.failed} failed\nBlogs: ${results.blogs.success} synced, ${results.blogs.failed} failed`);
+      loadBlogs();
+    }
   };
 
   const handleEditClick = (blog) => {
@@ -80,7 +88,7 @@ const Blogs = () => {
     setShowEditModal(true);
   };
 
-  const handleUpdateBlog = (e) => {
+  const handleUpdateBlog = async (e) => {
     e.preventDefault();
     const updates = {
       title: editingBlog.title,
@@ -92,7 +100,7 @@ const Blogs = () => {
       status: editingBlog.status,
     };
 
-    updateBlog(editingBlog.id, updates);
+    await updateBlog(editingBlog.id, updates);
     loadBlogs();
     setShowEditModal(false);
     setEditingBlog(null);
@@ -134,12 +142,12 @@ const Blogs = () => {
     alert(`Exported ${blogs.length} blog posts successfully!`);
   };
 
-  const handleImport = (event) => {
+  const handleImport = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const csvData = parseCSV(e.target.result);
         const newBlogs = csvData.map(item => ({
@@ -154,10 +162,12 @@ const Blogs = () => {
           views: Number(item.views) || 0,
         }));
 
-        newBlogs.forEach(blog => addBlog(blog));
+        for (const blog of newBlogs) {
+          await addBlog(blog);
+        }
         loadBlogs();
         alert(`Successfully imported ${newBlogs.length} blog posts!`);
-        event.target.value = ''; // Reset file input
+        event.target.value = '';
       } catch (error) {
         alert('Error importing CSV. Please check the file format.');
         console.error(error);
@@ -187,6 +197,13 @@ const Blogs = () => {
           >
             <Download size={18} />
             <span>Export All</span>
+          </button>
+          <button
+            onClick={handleMigrateToSupabase}
+            className="flex items-center space-x-2 border border-purple-600 text-purple-600 px-4 py-2 rounded-lg hover:bg-purple-50 transition-colors"
+            title="Sync all blogs to Supabase for website"
+          >
+            <span>Cloud Sync</span>
           </button>
           <label className="flex items-center space-x-2 border border-green-700 text-green-700 px-4 py-2 rounded-lg hover:bg-green-50 transition-colors cursor-pointer">
             <Upload size={18} />
