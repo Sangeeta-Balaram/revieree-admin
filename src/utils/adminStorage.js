@@ -17,30 +17,24 @@ const STORAGE_KEYS = {
 const toWebsiteProduct = (product) => {
     let category = product.category;
     if (category === 'fragrances') category = 'fragrance';
-    if (category === 'cosmetics') category = 'cosmetic';
-    
-    const isFragrance = category === 'fragrance';
-    
-    const variations = (product.variations || []).map((v, index) => ({
-        id: v.id || `var-${Date.now()}-${index}`,
-        [isFragrance ? 'size' : 'shade']: v.size || v.color || v.shade || '',
-        price: v.price || product.price,
-        stock: v.stock || 0,
-    }));
+    if (category === 'cosmetics') category = 'cosmetics';
     
     return {
+        id: product.supabaseId || product.id,
         name: product.name,
         category: category,
         subcategory: product.subcategory || '',
+        filter: product.filter || '',
         price: product.price,
         description: product.description || '',
         image: product.image || (product.images && product.images[0]) || '',
-        images: product.images || [],
         notes: Array.isArray(product.notes) ? product.notes.join(', ') : (product.notes || ''),
-        variations: variations,
         featured: product.featured || false,
-        hasOffer: product.hasOffer || false,
-        offerPercentage: product.offerPercentage || 0,
+        has_offer: product.hasOffer || false,
+        offer_percentage: product.offerPercentage || 0,
+        shade: product.shade || '',
+        finish: product.finish || '',
+        tags: product.tags || [],
     };
 };
 
@@ -59,34 +53,39 @@ const toWebsiteBlog = (blog) => ({
 const syncProductToSupabase = async (product, operation = 'upsert') => {
     try {
         const websiteProduct = toWebsiteProduct(product);
+        
         if (operation === 'delete') {
             if (product.supabaseId) {
                 await supabase.from('products').delete().eq('id', product.supabaseId);
             }
             return product.supabaseId;
-        } else if (operation === 'update' && product.supabaseId) {
+        }
+        
+        // UPDATE if product has supabaseId, otherwise INSERT
+        if (product.supabaseId) {
+            const { id, ...updateData } = websiteProduct;
             const { error } = await supabase
                 .from('products')
-                .update({ ...websiteProduct, updated_at: new Date().toISOString() })
+                .update({ ...updateData, updated_at: new Date().toISOString() })
                 .eq('id', product.supabaseId);
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase update error:', error);
+                throw error;
+            }
             return product.supabaseId;
-        } else if (operation === 'insert' || !product.supabaseId) {
+        } else {
+            // INSERT new product (no supabaseId yet)
+            const { id, ...insertData } = websiteProduct;
             const { data, error } = await supabase
                 .from('products')
-                .insert(websiteProduct)
+                .insert(insertData)
                 .select('id')
                 .single();
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase insert error:', error);
+                throw error;
+            }
             return data?.id;
-        } else if (product.supabaseId) {
-            // Update existing
-            const { error } = await supabase
-                .from('products')
-                .update({ ...websiteProduct, updated_at: new Date().toISOString() })
-                .eq('id', product.supabaseId);
-            if (error) throw error;
-            return product.supabaseId;
         }
     } catch (error) {
         console.error('Supabase sync error (product):', error);
