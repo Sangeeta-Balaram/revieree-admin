@@ -31,6 +31,8 @@ const Products = () => {
     stock: '',
     category: '',
     subcategory: '',
+    filter: '',
+    mood: '',
     description: '',
     notes: '',
     images: [],
@@ -91,6 +93,8 @@ const Products = () => {
       stock: newProduct.variations.length === 0 ? parseInt(newProduct.stock) : newProduct.variations.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0),
       category: selectedCategory === 'fragrances' ? 'fragrance' : 'cosmetics',
       subcategory: newProduct.subcategory,
+      filter: newProduct.filter,
+      mood: newProduct.mood,
       description: newProduct.description,
       notes: newProduct.notes.split(',').map(n => n.trim()),
       images: newProduct.images.length > 0 ? newProduct.images : ['https://images.unsplash.com/photo-1594035910387-fea47794261f?w=500&h=500&fit=crop'],
@@ -111,6 +115,8 @@ const Products = () => {
       stock: '',
       category: '',
       subcategory: '',
+      filter: '',
+      mood: '',
       description: '',
       notes: '',
       images: [],
@@ -138,6 +144,7 @@ const Products = () => {
       images: productImages,
       image: product.image || productImages[0] || '',
       offerPercentage: product.offerPercentage || '',
+      filter: product.filter || '',
     });
     console.log('handleEditClick - editingProduct.images will be:', productImages);
     setShowEditModal(true);
@@ -152,6 +159,9 @@ const Products = () => {
       name: editingProduct.name,
       price: parseInt(editingProduct.price),
       stock: parseInt(editingProduct.stock),
+      category: editingProduct.category,
+      subcategory: editingProduct.subcategory || '',
+      filter: editingProduct.filter || '',
       description: editingProduct.description,
       notes: editingProduct.notes.split(',').map(n => n.trim()),
       images: currentImages,
@@ -857,18 +867,56 @@ const Products = () => {
                      ) : (
                        <>
                          <option value="lipstick">Lipstick</option>
-                         <option value="kajal">Kajal</option>
-                         <option value="mascara">Mascara</option>
-                         <option value="lip-balm">Lip Balm</option>
-                       </>
-                     )}
-                   </select>
-                 </div>
+<option value="kajal">Kajal</option>
+                          <option value="mascara">Mascara</option>
+                          <option value="lip-balm">Lip Balm</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
 
-                 {newProduct.variations.length === 0 && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Stock Quantity *
+                      Filter (Optional)
+                    </label>
+                    <select
+                      value={newProduct.filter}
+                      onChange={(e) => setNewProduct({ ...newProduct, filter: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-burgundy-700 focus:border-transparent"
+                    >
+                      <option value="">None</option>
+                      <option value="bestseller">Bestseller</option>
+                      <option value="luxury">Luxury</option>
+                      <option value="new">New</option>
+                    </select>
+                  </div>
+
+                  {/* Mood Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Mood Filter
+                    </label>
+                    <select
+                      value={newProduct.mood}
+                      onChange={(e) => setNewProduct({ ...newProduct, mood: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-burgundy-700 focus:border-transparent"
+                    >
+                      <option value="">None</option>
+                      <option value="soft-girl">Soft Girl</option>
+                      <option value="clean-expensive">Clean & Expensive</option>
+                      <option value="main-character">Main Character</option>
+                      <option value="romantic-chaos">Romantic Chaos</option>
+                      <option value="after-hours">After Hours</option>
+                      <option value="bare-skin">Bare Skin</option>
+                      <option value="sweet-danger">Sweet Danger</option>
+                      <option value="unbothered">Unbothered</option>
+                    </select>
+                  </div>
+
+                  {newProduct.variations.length === 0 && (
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Stock Quantity *
                     </label>
                     <input
                       type="number"
@@ -1215,14 +1263,52 @@ const Products = () => {
                          <option value="lipstick">Lipstick</option>
                          <option value="kajal">Kajal</option>
                          <option value="mascara">Mascara</option>
-                         <option value="lip-balm">Lip Balm</option>
-                       </>
-                     )}
-                   </select>
-                 </div>
+<option value="lip-balm">Lip Balm</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
 
+                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Filter (Optional)
+                    </label>
+                    <select
+                      value={editingProduct.filter || ''}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, filter: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-burgundy-700 focus:border-transparent"
+                    >
+                      <option value="">None</option>
+                      <option value="bestseller">Bestseller</option>
+                      <option value="luxury">Luxury</option>
+                      <option value="new">New</option>
+                    </select>
+                  </div>
+
+                  {/* Mood Filter */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Mood Filter
+                    </label>
+                    <select
+                      value={editingProduct.mood || ''}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, mood: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-burgundy-700 focus:border-transparent"
+                    >
+                      <option value="">None</option>
+                      <option value="soft-girl">Soft Girl</option>
+                      <option value="clean-expensive">Clean & Expensive</option>
+                      <option value="main-character">Main Character</option>
+                      <option value="romantic-chaos">Romantic Chaos</option>
+                      <option value="after-hours">After Hours</option>
+                      <option value="bare-skin">Bare Skin</option>
+                      <option value="sweet-danger">Sweet Danger</option>
+                      <option value="unbothered">Unbothered</option>
+                    </select>
+                  </div>
+
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
                        Product Image
                      </label>
                      <div className="space-y-3">
